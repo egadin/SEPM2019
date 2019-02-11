@@ -75,14 +75,14 @@ class Game:
         if(self.GAME_ENDED()==True):
             print("ended")
         self.remainingPieces.remove(self.nextPiece)
-        self.remainingPiecesCanvashandler("delete", cont)
+        self.remainingPiecesCanvashandler("delete", self.nextPiece.id)
         self.pieceCanvas(self.nextPiece.id, cont + 1)
 
     def pieceCanvas(self, id, canvas):
         global boardCanvas
         global imagePaths
         global imagePoints
-        gameCanvas.create_image(imagePoints[canvas-1], image=imagePaths[canvas-1])
+        gameCanvas.create_image(imagePoints[canvas-1], image=imagePaths[id-1])
 
     def EVENT_HANDLER(self, e):
         if (self.event == 2):
@@ -216,9 +216,9 @@ tictoc = Game("1", "2")
 root = tk.Tk()
 root.bind('<Return>', tictoc.EVENT_HANDLER)
 gameCanvas = tk.Canvas(root, bg="white", height=1031, width=1031)
-gameCanvas.pack()
+gameCanvas.place(x=301,y=0, width=1031, height=1031)
 remainingPiecesCanvas = tk.Canvas(root, bg="light grey", height=1031, width=300)
-remainingPiecesCanvas.pack(side = "left")
+remainingPiecesCanvas.place(x=0, y=0, width = 300, height = 1031)
 remainingImagePoints = [[150,64],[150,128],[150,192],[150,256],[150,320],[150,384],[150,448],[150,512],[150,576],[150,640],[150,704],[150,768],[150,832],[150,896],[150,960],[150,1024]]
 
 c1=gameCanvas.create_rectangle(5, 5, 255, 255, fill = 'light grey', width = 5)
@@ -257,14 +257,14 @@ photo16 = tk.PhotoImage(file = '/home/erik/Documents/skola/SEPM/SEPM2019/img/p16
 imagePaths = [photo1, photo2, photo3, photo4, photo5, photo6, photo7, photo8, photo9, photo10, photo11, photo12, photo13, photo14, photo15, photo16]
 contents = tk.IntVar()
 PlayerLabel = tk.Label(root, text="")
-PlayerLabel.pack()
+PlayerLabel.place(x = 500, y = 1050)
 InstructionLabel = tk.Label(root, text="")
-InstructionLabel.pack()
+InstructionLabel.place(x= 500, y=1085)
 PlayerLabel.config(text='{}'.format(tictoc.player1)) if ((1 + tictoc.turncount % 2) == 1) else PlayerLabel.config(text='{}'.format(tictoc.player2))
 InstructionLabel.config(text='Number of piece to give away 1-16:')
 InstructionEntry = tk.Entry(root, bd = 5)
 InstructionEntry["textvariable"] = contents
-InstructionEntry.pack()
+InstructionEntry.place(x=500, y=1120)
 tictoc.remainingPiecesCanvashandler("start",1)
 tictoc.GAME_TURN
 
