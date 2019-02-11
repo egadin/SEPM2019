@@ -15,31 +15,45 @@ class Game:
         self.filledcanvas = []
 
     def GAME_ENDED(self):
-        for row in range(1,5):
-            if ((board[(1,row)].shape == board[(2,row)].shape == board[(3,row)].shape == board[(4,row)].shape) and board[(1,row)] != NAN or
-            (board[(1,row)].color == board[(2,row)].color == board[(3,row)].color == board[(4,row)].color) and board[(1,row)] != NAN or
-            (board[(1,row)].line == board[(2,row)].line == board[(3,row)].line == board[(4,row)].line) and board[(1,row)] != NAN or
-            (board[(1,row)].number == board[(2,row)].number == board[(3,row)].number == board[(4,row)].number) and board[(1,row)] != NAN):
-                return True
+        for row in range(0,4):
+            if (self.board[(0,row)] == None or self.board[(1,row)] == None or self.board[(2,row)] == None or self.board[(3,row)] == None):
+                a = False
+            else:
+                if ((self.board[(0,row)].shape == self.board[(1,row)].shape == self.board[(2,row)].shape == self.board[(3,row)].shape) and self.board[(0,row)] or
+                (self.board[(0,row)].color == self.board[(1,row)].color == self.board[(2,row)].color == self.board[(3,row)].color) and self.board[(0,row)] or
+                (self.board[(0,row)].line == self.board[(1,row)].line == self.board[(2,row)].line == self.board[(3,row)].line) and self.board[(0,row)] or
+                (self.board[(0,row)].number == self.board[(1,row)].number == self.board[(2,row)].number == self.board[(3,row)].number) and self.board[(0,row)]):
+                    return True
 
-        for col in range(1,5):
-            if ((board[(col,1)].shape == board[(col,2)].shape == board[(col,3)].shape == board[(col,4)].shape) and board[(1,row)] != NAN or
-            (board[(col,1)].color == board[(col,2)].color == board[(col,3)].color == board[(col,4)].color) and board[(1,row)] != NAN or
-            (board[(col,1)].line == board[(col,2)].line == board[(col,3)].line == board[(col,4)].line) and board[(1,row)] != NAN or
-            (board[(col,1)].number == board[(col,2)].number == board[(col,3)].number == board[(col,4)].number) and board[(1,row)] != NAN):
-                return True
+        for col in range(0,4):
+            if (self.board[col,0] == None or self.board[col,1] == None or self.board[col,2] == None or self.board[col,3] == None):
+                a = False
+            else:
+                if ((self.board[(col,0)].shape == self.board[(col,1)].shape == self.board[(col,2)].shape == self.board[(col,3)].shape) and self.board[(0,row)] or
+                (self.board[(col,0)].color == self.board[(col,1)].color == self.board[(col,2)].color == self.board[(col,3)].color) and self.board[(0,row)] or
+                (self.board[(col,0)].line == self.board[(col,1)].line == self.board[(col,2)].line == self.board[(col,3)].line) and self.board[(0,row)] or
+                (self.board[(col,0)].number == self.board[(col,1)].number == self.board[(col,2)].number == self.board[(col,3)].number) and self.board[(0,row)]):
+                    return True
 
-        if ((board[(1,1)].shape == board[(2,2)].shape == board[(3,3)].shape == board[(4,4)].shape) and board[(1,1)] != NAN or
-        (board[(1,1)].color == board[(2,2)].co1or == board[(3,3)].color == board[(4,4)].color) and board[(1,1)] != NAN or
-        (board[(1,1)].line == board[(2,2)].line == board[(3,3)].line == board[(4,4)].line) and board[(1,1)] != NAN or
-        (board[(1,1)].number == board[(2,2)].number == board[(3,3)].number == board[(4,4)].number) and board[(1,1)] != NAN or
-        (board[(1,4)].shape == board[(2,3)].shape == board[(3,2)].shape == board[(4,1)].shape) and board[(4,1)] != NAN or
-        (board[(1,4)].color == board[(2,3)].color == board[(3,2)].color == board[(4,1)].color) and board[(4,1)] != NAN or
-        (board[(1,4)].line == board[(2,3)].line == board[(3,2)].line == board[(4,1)].line) and board[(4,1)] != NAN or
-        (board[(1,4)].number == board[(2,3)].number == board[(3,2)].number == board[(4,1)].number) and board[(4,1)] != NAN):
-            return True
-
+        if (self.board[(0,0)] == None or self.board[(1,1)] == None or self.board[(2,2)] == None or self.board[(3,3)] == None):
+            a = False
         else:
+            if ((self.board[(0,0)].shape == self.board[(1,1)].shape == self.board[(2,2)].shape == self.board[(3,3)].shape) and self.board[(0,0)] or
+            (self.board[(0,0)].color == self.board[(1,1)].co0or == self.board[(2,2)].color == self.board[(3,3)].color) and self.board[(0,0)] or
+            (self.board[(0,0)].line == self.board[(1,1)].line == self.board[(2,2)].line == self.board[(3,3)].line) and self.board[(0,0)] or
+            (self.board[(0,0)].number == self.board[(1,1)].number == self.board[(2,2)].number == self.board[(3,3)].number) and self.board[(0,0)]):
+                return True
+
+        if (self.board[(0,3)] == None or self.board[(1,2)] == None or self.board[(2,1)] == None or self.board[(3,0)] == None):
+            a = False
+        else:
+            if ((self.board[(0,3)].shape == self.board[(1,2)].shape == self.board[(2,1)].shape == self.board[(3,0)].shape) and self.board[(3,0)] or
+            (self.board[(0,3)].color == self.board[(1,2)].color == self.board[(2,1)].color == self.board[(3,0)].color) and self.board[(3,0)] or
+            (self.board[(0,3)].line == self.board[(1,2)].line == self.board[(2,1)].line == self.board[(3,0)].line) and self.board[(3,0)] or
+            (self.board[(0,3)].number == self.board[(1,2)].number == self.board[(2,1)].number == self.board[(3,0)].number) and self.board[(3,0)]):
+                return True
+
+        if (a==False):
             return False
 
 
@@ -51,19 +65,20 @@ class Game:
         self.turncount += 1
 
     def layPiece(self):
-        cont = contents.get()
+        cont = contents.get() - 1
         column = cont % 4
-        row = (cont // 4) if (cont > 3) else 1
+        row = cont // 4
         InstructionEntry.delete(first=0,last=10)
         self.board[(row,column)] = self.nextPiece
+        if(self.GAME_ENDED()==True):
+            print("ended")
         self.remainingPieces.remove(self.nextPiece)
-        self.pieceCanvas(self.nextPiece.id, cont)
+        self.pieceCanvas(self.nextPiece.id, cont + 1)
 
     def pieceCanvas(self, id, canvas):
         global boardCanvas
         global imagePaths
         gameCanvas.create_image(imagePoints[canvas-1], image=imagePaths[canvas-1])
-        self.filledcanvas.extend(canvas)
 
     def EVENT_HANDLER(self, e):
         if (self.event == 2):
