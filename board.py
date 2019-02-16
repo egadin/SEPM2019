@@ -64,7 +64,7 @@ class Game:
         global imagePaths
         found = False
         for piece in range(0,16-self.turncount):
-            if (self.remainingPieces[piece].id == contents.get() - 1):
+            if (self.remainingPieces[piece].id == contents.get()):
                 self.nextPiece = self.remainingPieces[piece]  #nextpiece start as (0,0,0,0,0)
                 found = True
                 self.nextPieceImg = nextPieceCanvas.create_image([100,100], image=imagePaths[piece]['regular'])
@@ -98,7 +98,7 @@ class Game:
             if(self.GAME_ENDED()==True):
                 print("ended")
             self.remainingPieces.remove(self.nextPiece)
-            self.remainingPiecesCanvashandler("delete", self.nextPiece.id)
+            self.remainingPiecesCanvashandler("delete", self.nextPiece.id-1)
             self.pieceCanvas(self.nextPiece.id, cont + 1)
             nextPieceCanvas.delete(self.nextPieceImg)
 
@@ -200,6 +200,15 @@ class Piece:
         return locals()
     number = property(**number())
 
+class AI():
+    def __init__(self, difficulty):
+        self.difficulty = difficulty
+
+    def AIgivepiece(board, remainingPieces):
+        pass
+
+    def AIlaypiece(board, remainingPieces):
+        pass
 root = tk.Tk()
 gameCanvas = tk.Canvas(root, bg="white", height=1031, width=1031)
 gameCanvas.place(x=301,y=0, width=1031, height=1031)
