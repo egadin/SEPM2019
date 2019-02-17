@@ -137,6 +137,7 @@ class Game:
         global remainingPiecesCanvas
         if (action == "delete"):
             remainingPiecesCanvas.delete(self.indexRemainingPieces[number])
+
 class Piece:
     def __init__(self, id, shape, color, line, number):
         self.id = id
@@ -204,11 +205,111 @@ class AI():
     def __init__(self, difficulty):
         self.difficulty = difficulty
 
-    def AIgivepiece(board, remainingPieces):
-        pass
+    def makeBestMove(self, board, remainingPiecesCopy, nextPieceCopy):
+        self.boardCopy = board
+        self.remainingPiecesCopy = remainingPiecesCopy
+        self.nextPieceCopy = nextPieceCopy
 
-    def AIlaypiece(board, remainingPieces):
-        pass
+        return self.maxMove(0)
+
+        def maxMove(self, depth):
+            if (self.GAME_ENDED() == True):
+                return moveInfo(20-depth,None,None)
+
+            max = moveInfo(None,None,None)
+
+            for i in range(len(self.boardCopy)):
+                for j in range(len(self.boardCopy[i])):
+                    if (self.boardCopy[i,j] == None):
+                        self.boardCopy[i,j] = nextPieceCopy
+
+                        for k in range(remainingPiecesCopy):
+                            nextPieceCopy = remainingPiecesCopy[k]
+                            remainingPiecesCopy.delete(nextPieceCopy)
+                            currentMove = self.minMove(depth + 1)
+
+                            if (currentMove.score > max):
+                                max.score = currentMove.score
+                                max.location = [i,j]
+                                max.nextPiece = nextPieceCopy
+
+                            remainingPiecesCopy.append(nextPieceCopy)
+
+                        self.boardCopy[i,j] == None
+            return max
+
+
+        def minMove(self, depth):
+            if (self.GAME_ENDED() == True):
+                return moveInfo(depth-20,None,None)
+
+            min = moveInfo(None,None,None)
+
+            for i in range(len(self.boardCopy)):
+                for j in range(len(self.boardCopy[i])):
+                    if (self.boardCopy[i,j] == None):
+                        self.boardCopy[i,j] = nextPieceCopy
+
+                        for k in range(remainingPiecesCopy):
+                            nextPieceCopy = remainingPiecesCopy[k]
+                            remainingPiecesCopy.delete(nextPieceCopy)
+                            currentMove = self.maxMove(depth + 1)
+
+                            if (currentMove.score < min):
+                                min.score = currentMove.score
+                                min.location = [i,j]
+                                min.nextPiece = nextPieceCopy
+
+                            remainingPiecesCopy.append(nextPieceCopy)
+
+                        self.boardCopy[i,j] == None
+            return min
+
+    def GAME_ENDED(self):
+        for row in range(0,4):
+            if (self.boardCopy[(0,row)] == None or self.boardCopy[(1,row)] == None or self.boardCopy[(2,row)] == None or self.boardCopy[(3,row)] == None):
+                pass
+            elif ((self.boardCopy[(0,row)].shape == self.boardCopy[(1,row)].shape == self.boardCopy[(2,row)].shape == self.boardCopy[(3,row)].shape) and self.boardCopy[(0,row)] or
+                (self.boardCopy[(0,row)].color == self.boardCopy[(1,row)].color == self.boardCopy[(2,row)].color == self.boardCopy[(3,row)].color) and self.boardCopy[(0,row)] or
+                (self.boardCopy[(0,row)].line == self.boardCopy[(1,row)].line == self.boardCopy[(2,row)].line == self.boardCopy[(3,row)].line) and self.boardCopy[(0,row)] or
+                (self.boardCopy[(0,row)].number == self.boardCopy[(1,row)].number == self.boardCopy[(2,row)].number == self.boardCopy[(3,row)].number) and self.boardCopy[(0,row)]):
+                    return True
+
+        for col in range(0,4):
+            if (self.boardCopy[col,0] == None or self.boardCopy[col,1] == None or self.boardCopy[col,2] == None or self.boardCopy[col,3] == None):
+                pass
+            elif ((self.boardCopy[(col,0)].shape == self.boardCopy[(col,1)].shape == self.boardCopy[(col,2)].shape == self.boardCopy[(col,3)].shape) and self.boardCopy[(0,row)] or
+                (self.boardCopy[(col,0)].color == self.boardCopy[(col,1)].color == self.boardCopy[(col,2)].color == self.boardCopy[(col,3)].color) and self.boardCopy[(0,row)] or
+                (self.boardCopy[(col,0)].line == self.boardCopy[(col,1)].line == self.boardCopy[(col,2)].line == self.boardCopy[(col,3)].line) and self.boardCopy[(0,row)] or
+                (self.boardCopy[(col,0)].number == self.boardCopy[(col,1)].number == self.boardCopy[(col,2)].number == self.boardCopy[(col,3)].number) and self.boardCopy[(0,row)]):
+                    return True
+
+        if (self.boardCopy[(0,0)] == None or self.boardCopy[(1,1)] == None or self.boardCopy[(2,2)] == None or self.boardCopy[(3,3)] == None):
+            pass
+        elif ((self.boardCopy[(0,0)].shape == self.boardCopy[(1,1)].shape == self.boardCopy[(2,2)].shape == self.boardCopy[(3,3)].shape) and self.boardCopy[(0,0)] or
+            (self.boardCopy[(0,0)].color == self.boardCopy[(1,1)].co0or == self.boardCopy[(2,2)].color == self.boardCopy[(3,3)].color) and self.boardCopy[(0,0)] or
+            (self.boardCopy[(0,0)].line == self.boardCopy[(1,1)].line == self.boardCopy[(2,2)].line == self.boardCopy[(3,3)].line) and self.boardCopy[(0,0)] or
+            (self.boardCopy[(0,0)].number == self.boardCopy[(1,1)].number == self.boardCopy[(2,2)].number == self.boardCopy[(3,3)].number) and self.boardCopy[(0,0)]):
+                return True
+
+        if (self.boardCopy[(0,3)] == None or self.boardCopy[(1,2)] == None or self.boardCopy[(2,1)] == None or self.boardCopy[(3,0)] == None):
+            pass
+        elif ((self.boardCopy[(0,3)].shape == self.boardCopy[(1,2)].shape == self.boardCopy[(2,1)].shape == self.boardCopy[(3,0)].shape) and self.boardCopy[(3,0)] or
+            (self.boardCopy[(0,3)].color == self.boardCopy[(1,2)].color == self.boardCopy[(2,1)].color == self.boardCopy[(3,0)].color) and self.boardCopy[(3,0)] or
+            (self.boardCopy[(0,3)].line == self.boardCopy[(1,2)].line == self.boardCopy[(2,1)].line == self.boardCopy[(3,0)].line) and self.boardCopy[(3,0)] or
+            (self.boardCopy[(0,3)].number == self.boardCopy[(1,2)].number == self.boardCopy[(2,1)].number == self.boardCopy[(3,0)].number) and self.boardCopy[(3,0)]):
+                return True
+
+        return False
+
+class moveInfo():
+    def __init__(self, score, location, nextpiece):
+        self.score = score
+        self.location = location
+        self.nextPiece = nextPiece
+
+
+
 root = tk.Tk()
 gameCanvas = tk.Canvas(root, bg="white", height=1031, width=1031)
 gameCanvas.place(x=301,y=0, width=1031, height=1031)
