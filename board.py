@@ -1,10 +1,12 @@
 import Tkinter as tk
 import numpy as np
+import random
+import copy
 from PIL import Image, ImageTk
 from os import path
 
 class Game:
-    def __init__(self, player1, player2):
+    def __init__(self, player1, player2, AI):
         global remainingPiecesCanvas
         global remainingImagePoints
         global imagePaths
@@ -20,44 +22,58 @@ class Game:
         self.exception = False
         self.indexRemainingPieces = [remainingPiecesCanvas.create_image(remainingImagePoints[c], image=imagePaths[c]['small']) for c in range(16)]
         self.nextPieceImg = None
+        self.AI = AI
 
-    def GAME_ENDED(self):
-        for row in range(0,4):
-            if (self.board[(0,row)] == None or self.board[(1,row)] == None or self.board[(2,row)] == None or self.board[(3,row)] == None):
-                pass
-            elif ((self.board[(0,row)].shape == self.board[(1,row)].shape == self.board[(2,row)].shape == self.board[(3,row)].shape) and self.board[(0,row)] or
-                (self.board[(0,row)].color == self.board[(1,row)].color == self.board[(2,row)].color == self.board[(3,row)].color) and self.board[(0,row)] or
-                (self.board[(0,row)].line == self.board[(1,row)].line == self.board[(2,row)].line == self.board[(3,row)].line) and self.board[(0,row)] or
-                (self.board[(0,row)].number == self.board[(1,row)].number == self.board[(2,row)].number == self.board[(3,row)].number) and self.board[(0,row)]):
+    @staticmethod
+    def GAME_ENDED(board):
+        for prop in ['shape', 'color', 'line', 'number']:
+            for row in range(0, 4):
+                if not board[0, row]:
+                    continue
+
+                for col in range(1, 4):
+                    if not board[col, row]:
+                        break
+
+                    if vars(board[col, row])[prop] != vars(board[0, row])[prop]:
+                        break
+                else:
                     return True
 
-        for col in range(0,4):
-            if (self.board[col,0] == None or self.board[col,1] == None or self.board[col,2] == None or self.board[col,3] == None):
-                pass
-            elif ((self.board[(col,0)].shape == self.board[(col,1)].shape == self.board[(col,2)].shape == self.board[(col,3)].shape) and self.board[(0,row)] or
-                (self.board[(col,0)].color == self.board[(col,1)].color == self.board[(col,2)].color == self.board[(col,3)].color) and self.board[(0,row)] or
-                (self.board[(col,0)].line == self.board[(col,1)].line == self.board[(col,2)].line == self.board[(col,3)].line) and self.board[(0,row)] or
-                (self.board[(col,0)].number == self.board[(col,1)].number == self.board[(col,2)].number == self.board[(col,3)].number) and self.board[(0,row)]):
+            for col in range(0, 4):
+                if not board[col, 0]:
+                    continue
+
+                for row in range(1, 4):
+                    if not board[col, row]:
+                        break
+
+                    if vars(board[col, row])[prop] != vars(board[col, 0])[prop]:
+                        break
+                else:
                     return True
 
-        if (self.board[(0,0)] == None or self.board[(1,1)] == None or self.board[(2,2)] == None or self.board[(3,3)] == None):
-            pass
-        elif ((self.board[(0,0)].shape == self.board[(1,1)].shape == self.board[(2,2)].shape == self.board[(3,3)].shape) and self.board[(0,0)] or
-            (self.board[(0,0)].color == self.board[(1,1)].co0or == self.board[(2,2)].color == self.board[(3,3)].color) and self.board[(0,0)] or
-            (self.board[(0,0)].line == self.board[(1,1)].line == self.board[(2,2)].line == self.board[(3,3)].line) and self.board[(0,0)] or
-            (self.board[(0,0)].number == self.board[(1,1)].number == self.board[(2,2)].number == self.board[(3,3)].number) and self.board[(0,0)]):
-                return True
+            if board[0, 0]:
+                for diag in range(1, 4):
+                    if not board[diag, diag]:
+                        break
 
-        if (self.board[(0,3)] == None or self.board[(1,2)] == None or self.board[(2,1)] == None or self.board[(3,0)] == None):
-            pass
-        elif ((self.board[(0,3)].shape == self.board[(1,2)].shape == self.board[(2,1)].shape == self.board[(3,0)].shape) and self.board[(3,0)] or
-            (self.board[(0,3)].color == self.board[(1,2)].color == self.board[(2,1)].color == self.board[(3,0)].color) and self.board[(3,0)] or
-            (self.board[(0,3)].line == self.board[(1,2)].line == self.board[(2,1)].line == self.board[(3,0)].line) and self.board[(3,0)] or
-            (self.board[(0,3)].number == self.board[(1,2)].number == self.board[(2,1)].number == self.board[(3,0)].number) and self.board[(3,0)]):
-                return True
+                    if not vars(board[0, 0])[prop] != vars(board[diag, diag])[prop]:
+                        break
+                else:
+                    return True
+
+            if board[3, 0]:
+                for diag in range(1, 4):
+                    if not board[4 - diag, diag]:
+                        break
+
+                    if not vars(board[3, 0])[prop] != vars(board[4 - diag, diag])[prop]:
+                        break
+                else:
+                    return True
 
         return False
-
 
     def givePiece(self):
         global nextPieceCanvas
@@ -70,6 +86,8 @@ class Game:
                 self.nextPieceImg = nextPieceCanvas.create_image([100,100], image=imagePaths[piece]['regular'])
         if (found == True):
             self.exception = False
+            self.remainingPieces.remove(self.nextPiece)
+            self.remainingPiecesCanvashandler("delete", self.nextPiece.id-1)
             InstructionEntry.delete(first=0,last=10)
             self.turncount += 1
         else:
@@ -95,13 +113,10 @@ class Game:
             self.exception = False
             InstructionEntry.delete(first=0,last=10)
             self.board[row,column] = self.nextPiece
-            if(self.GAME_ENDED()==True):
+            if(Game.GAME_ENDED(self.board)==True):
                 print("ended")
-            self.remainingPieces.remove(self.nextPiece)
-            self.remainingPiecesCanvashandler("delete", self.nextPiece.id-1)
             self.pieceCanvas(self.nextPiece.id, cont + 1)
             nextPieceCanvas.delete(self.nextPieceImg)
-
 
     def pieceCanvas(self, id, canvas):
         global boardCanvas
@@ -116,15 +131,38 @@ class Game:
                 self.event = 1
                 self.GAME_TURN()
         elif (self.event == 1):
-            self.layPiece()
-            if (self.exception != True):
-                self.event = 2
-                self.GAME_TURN()
+            if (((1 + self.turncount % 2) != 1) and self.player2 == None):
+                self.AIturn()
+            else:
+                self.layPiece()
+                if (self.exception != True):
+                    self.event = 2
+                    self.GAME_TURN()
         elif (self.event == 3):
             quit
 
+    def AIturn(self):
+        global nextPieceCanvas
+        global imagePaths
+        print(self.remainingPieces)
+        AImove = self.AI.makeBestMove(self.board, self.remainingPieces, self.nextPiece) #skickar jag in riktiga eller copierar jag bara?
+        print(self.remainingPieces)
+        print(AImove.location)
+        self.board[AImove.location] = self.nextPiece
+        if(Game.GAME_ENDED(self.board)==True):
+            print("ended")
+        self.pieceCanvas(self.nextPiece.id, AImove.locationInt + 1)
+        nextPieceCanvas.delete(self.nextPieceImg)
+        self.nextPiece = AImove.nextPiece
+        self.nextPieceImg = nextPieceCanvas.create_image([100,100], image=imagePaths[self.nextPiece.id - 1]['regular'])
+        self.remainingPieces.remove(self.nextPiece)
+        self.remainingPiecesCanvashandler("delete", self.nextPiece.id-1)
+        self.turncount += 1
+        self.event = 1
+        self.GAME_TURN()
 
     def GAME_TURN(self):
+        print(self.board)
         if (self.event == 1):
             PlayerLabel.config(text='{}'.format(self.player1)) if ((1 + self.turncount % 2) == 1) else PlayerLabel.config(text='{}'.format(self.player2))
             InstructionLabel.config(text='Where to place current piece (1-16):')
@@ -146,70 +184,128 @@ class Piece:
         self.line = line
         self.number = number
 
-    def id():
-        doc = "The id property."
-        def fget(self):
-            return self._id
-        def fset(self, value):
-            self._id = value
-        def fdel(self):
-            del self._id
-        return locals()
-    id = property(**id())
-
-    def shape():
-        doc = "The shape property."
-        def fget(self):
-            return self._shape
-        def fset(self, value):
-            self._shape = value
-        def fdel(self):
-            del self._shape
-        return locals()
-    shape = property(**shape())
-
-    def color():
-        doc = "The color property."
-        def fget(self):
-            return self._color
-        def fset(self, value):
-            self._color = value
-        def fdel(self):
-            del self._color
-        return locals()
-    color = property(**color())
-
-    def line():
-        doc = "The line property."
-        def fget(self):
-            return self._line
-        def fset(self, value):
-            self._line = value
-        def fdel(self):
-            del self._line
-        return locals()
-    line = property(**line())
-
-    def number():
-        doc = "The number property."
-        def fget(self):
-            return self._number
-        def fset(self, value):
-            self._number = value
-        def fdel(self):
-            del self._number
-        return locals()
-    number = property(**number())
-
 class AI():
     def __init__(self, difficulty):
         self.difficulty = difficulty
 
-    def AIgivepiece(board, remainingPieces):
-        pass
+    def makeBestMove(self, board, remainingPiecesCopy, nextPieceCopy):
+        rand = random.randint(1,11)
+        if (self.difficulty == "easy"):
+            if (rand > 1):
+                locInfo = self.randomLocation(board)
+                npInfo = self.randomNP(remainingPiecesCopy)
+                return moveInfo(0, locInfo[0], locInfo[1], npInfo)
+            else:
+                return self.maxMove(0, board, remainingPiecesCopy, nextPieceCopy)
 
-    def AIlaypiece(board, remainingPieces):
-        pass
+        elif (self.difficulty == "medium"):
+            if (rand > 3):
+                locInfo = self.randomLocation(board)
+                npInfo = self.randomNP(remainingPiecesCopy)
+                return moveInfo(0, locInfo[0], locInfo[1], npInfo)
+            else:
+                return self.maxMove(0, board, remainingPiecesCopy, nextPieceCopy)
+
+        elif (self.difficulty == "hard"):
+            if (rand > 7):
+                locInfo = self.randomLocation(board)
+                npInfo = self.randomNP(remainingPiecesCopy)
+                return moveInfo(0, locInfo[0], locInfo[1], npInfo)
+            else:
+                return self.maxMove(0, board, remainingPiecesCopy, nextPieceCopy)
+
+    def randomLocation(self, board):
+        pieces = [(board[i % 4, i // 4], (i % 4, i // 4), i) for i in range(0, 15)]
+        pieces = filter(lambda (piece, coord, loc): piece, pieces)
+
+        piece = random.choice(pieces)
+
+        return (piece[1], piece[2])
+
+    def randomNP(self, remainingPiecesCopy):
+        return remainingPiecesCopy[random.randint(0,len(remainingPiecesCopy)-1)]
+
+    def maxMove(self, depth, board, remainingPieces, nextPiece):
+        if depth > 1:
+            locInfo = self.randomLocation(board)
+            npInfo = self.randomNP(remainingPieces)
+            return moveInfo(0, locInfo[0], locInfo[1], npInfo)
+
+        boardCopy = copy.deepcopy(board)
+        remainingPiecesCopy = copy.copy(remainingPieces)
+        nextPieceCopy = copy.copy(nextPiece)
+        if (Game.GAME_ENDED(boardCopy) == True):
+            return moveInfo(depth-20,None,None,None)
+
+        max = moveInfo(None,None,None,None)
+
+        for i in range(len(boardCopy)):
+            for j in range(len(boardCopy[i])):
+                if (boardCopy[i,j] == None):
+                    boardCopy[i,j] = nextPieceCopy
+
+                    for k in range(len(remainingPiecesCopy)):
+                        nextPieceCopy = remainingPiecesCopy[k]
+                        remainingPiecesCopy.remove(nextPieceCopy)
+
+                        currentMove = self.minMove(depth + 1, boardCopy, remainingPiecesCopy, nextPieceCopy)
+
+                        if (currentMove.score > max):
+                            max.score = currentMove.score
+                            max.location = (i, j)
+                            max.locationInt = (i*4 + j)
+                            max.nextPiece = nextPieceCopy
+
+                        remainingPiecesCopy.append(nextPieceCopy)
+
+                    boardCopy[i,j] = None
+
+        return max
+
+
+    def minMove(self, depth, board, remainingPieces, nextPiece):
+        if depth > 1:
+            locInfo = self.randomLocation(board)
+            npInfo = self.randomNP(remainingPieces)
+            return moveInfo(0, locInfo[0], locInfo[1], npInfo)
+
+        boardCopy = copy.deepcopy(board)
+        remainingPiecesCopy = copy.copy(remainingPieces)
+        nextPieceCopy = copy.copy(nextPiece)
+        if (Game.GAME_ENDED(boardCopy) == True):
+            return moveInfo(20-depth,None,None,None)
+
+        min = moveInfo(float('inf'),None,None,None)
+
+        for i in range(len(boardCopy)):
+            for j in range(len(boardCopy[i])):
+                if (boardCopy[i,j] == None):
+                    boardCopy[i,j] = nextPieceCopy
+
+                    for k in range(len(remainingPiecesCopy)):
+                        nextPieceCopy = remainingPiecesCopy[k]
+                        remainingPiecesCopy.remove(nextPieceCopy)
+
+                        currentMove = self.maxMove(depth + 1, boardCopy, remainingPiecesCopy, nextPieceCopy)
+
+                        if (currentMove.score < min):
+                            min.score = currentMove.score
+                            min.location = (i,j)
+                            min.locationInt = (i*4 + j)
+                            min.nextPiece = nextPieceCopy
+
+                        remainingPiecesCopy.append(nextPieceCopy)
+
+                    boardCopy[i,j] == None
+        return min
+
+class moveInfo():
+    def __init__(self, score, location, locationInt, nextpiece):
+        self.score = score
+        self.location = location
+        self.locationInt = locationInt
+        self.nextPiece = nextpiece
+
 root = tk.Tk()
 gameCanvas = tk.Canvas(root, bg="white", height=1031, width=1031)
 gameCanvas.place(x=301,y=0, width=1031, height=1031)
@@ -248,8 +344,8 @@ PlayerLabel.place(x = 500, y = 1050)
 InstructionLabel = tk.Label(root, text="")
 InstructionLabel.place(x= 500, y=1085)
 
-tictoc = Game("1", "2")
-
+tictocAI = AI("easy")
+tictoc = Game("1", None, tictocAI)
 root.bind('<Return>', tictoc.EVENT_HANDLER)
 
 PlayerLabel.config(text='{}'.format(tictoc.player1)) if ((1 + tictoc.turncount % 2) == 1) else PlayerLabel.config(text='{}'.format(tictoc.player2))
@@ -258,6 +354,8 @@ InstructionEntry = tk.Entry(root, bd = 5)
 InstructionEntry["textvariable"] = contents
 InstructionEntry.place(x=500, y=1120)
 tictoc.remainingPiecesCanvashandler("start",1)
-tictoc.GAME_TURN
+tictoc.GAME_TURN()
+
+root.pack_slaves()
 
 root.mainloop()
