@@ -212,11 +212,11 @@ class Game:
     def GAME_TURN(self):
         if (self.event == 1):
             PlayerLabel.config(text='{}'.format(self.player1)) if ((1 + self.turncount % 2) == 1) else PlayerLabel.config(text='{}'.format(self.player2))
-            InstructionLabel.config(text='Where to place current piece 1-16:')
+            InstructionLabel.config(text='Where to place current piece (1-16):')
 
         elif (self.event == 2):
             PlayerLabel.config(text='{}'.format(self.player1)) if ((1 + self.turncount % 2) == 1) else PlayerLabel.config(text='{}'.format(self.player2))
-            InstructionLabel.config(text='Number of piece to give away 1-16:')
+            InstructionLabel.config(text='Number of piece to give away (1-16):')
 
     """
     Options for canvasRP supports delete as of now since it's initiated elsewhere
