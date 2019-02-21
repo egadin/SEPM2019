@@ -217,7 +217,7 @@ class Game:
         global imagePaths
         # Returns moveInfo object
         print(self.nextPiece)
-        AImove = self.AI.makeBestMove(self.board, self.remainingPieces, self.nextPiece) #skickar jag in riktiga eller copierar jag bara?
+        AImove = self.AI.makeBestMove(self.board, self.remainingPieces, self.nextPiece, self.turncount) #skickar jag in riktiga eller copierar jag bara?
         print(AImove.location, AImove.score, AImove.nextPiece)
         self.board[AImove.location] = self.nextPiece
         print(self.board)
@@ -296,7 +296,7 @@ class AI():
     param @remainingPiecesCopy the array of remaining pieces
     param @nextPieceCopy the next piece that the AI should place
     """
-    def makeBestMove(self, board, remainingPieces, nextPiece):
+    def makeBestMove(self, board, remainingPieces, nextPiece, turncount):
         rand = 1 #random.randint(1,11)
         boardCopy = copy.deepcopy(board)
 
@@ -306,7 +306,7 @@ class AI():
                 npInfo = self.randomNP(remainingPieces)
                 return moveInfo(0, locInfo[0], locInfo[1], npInfo)
             else:
-                return self.alphabeta(boardCopy, remainingPieces, nextPiece, 0, float('-inf'), float('inf'), True)
+                return self.alphabeta(boardCopy, remainingPieces, nextPiece, 0, float('-inf'), float('inf'), True, turncount)
 
         elif (self.difficulty == "medium"):
             if (rand > 3):
@@ -314,7 +314,7 @@ class AI():
                 npInfo = self.randomNP(remainingPieces)
                 return moveInfo(0, locInfo[0], locInfo[1], npInfo)
             else:
-                return self.alphabeta(boardCopy, remainingPieces, nextPiece, 0, float('-inf'), float('inf'), True)
+                return self.alphabeta(boardCopy, remainingPieces, nextPiece, 0, float('-inf'), float('inf'), True, turncount)
 
         elif (self.difficulty == "hard"):
             if (rand > 7):
@@ -322,7 +322,7 @@ class AI():
                 npInfo = self.randomNP(remainingPieces)
                 return moveInfo(0, locInfo[0], locInfo[1], npInfo)
             else:
-                return self.alphabeta(boardCopy, remainingPieces, nextPiece, 0, float('-inf'), float('inf'), True)
+                return self.alphabeta(boardCopy, remainingPieces, nextPiece, 0, float('-inf'), float('inf'), True, turncount)
 
     """
     Randomizes a location on the gameboard from all the empty tiles
@@ -360,7 +360,7 @@ class AI():
     param @b the beta value
     param @maximizingPlayer if the algorithm should be on min or max stage
     """
-    def alphabeta(self, board, remainingPieces, nextPiece, depth, a, b, maximizingPlayer):
+    def alphabeta(self, board, remainingPieces, nextPiece, depth, a, b, maximizingPlayer, turncount):
         if (len(remainingPieces)>=15):
            locInfo = self.randomLocation(board)
            npInfo = self.randomNP(remainingPieces)
@@ -373,7 +373,7 @@ class AI():
                     return moveInfo(depth-20, None,None,None)
                 else:
                     return moveInfo(20-depth,None,None,None)
-            elif (depth > 3):
+            elif (depth > (2 if turncount < 6 else 3)):
                locInfo = self.randomLocation(board)
                npInfo = self.randomNP(remainingPieces)
                return moveInfo(0, locInfo[0], locInfo[1], npInfo)
@@ -390,7 +390,7 @@ class AI():
                                 remainingPiecesCopy = copy.deepcopy(remainingPieces)
                                 nextPieceCopy = remainingPiecesCopy[k]
                                 remainingPiecesCopy.remove(nextPieceCopy)
-                                currentMove = self.alphabeta(boardCopy, remainingPiecesCopy, nextPieceCopy, depth + 1, a, b, False)
+                                currentMove = self.alphabeta(boardCopy, remainingPiecesCopy, nextPieceCopy, depth + 1, a, b, False, turncount)
                                 if (value.score <= currentMove.score):
                                     value.score = currentMove.score
                                     if (currentMove.locationInt==None):
@@ -419,7 +419,7 @@ class AI():
                                 remainingPiecesCopy = copy.deepcopy(remainingPieces)
                                 nextPieceCopy = remainingPiecesCopy[k]
                                 remainingPiecesCopy.remove(nextPieceCopy)
-                                currentMove = self.alphabeta(boardCopy, remainingPiecesCopy, nextPieceCopy, depth + 1, a, b, True)
+                                currentMove = self.alphabeta(boardCopy, remainingPiecesCopy, nextPieceCopy, depth + 1, a, b, True, turncount)
 
                                 if (value.score >= currentMove.score):
                                     value.score = currentMove.score
