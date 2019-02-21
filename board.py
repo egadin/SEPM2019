@@ -231,11 +231,11 @@ class Game:
 
 """
 Class containing the structure for a pieces
-param@ id identification for each piece so you can acces them
-param@ shape information about one of the binary parameters that a piece holds
-param@ color information about one of the binary parameters that a piece holds
-param@ line information about one of the binary parameters that a piece holds
-param@ number information about one of the binary parameters that a piece holds
+param @id identification for each piece so you can acces them
+param @shape information about one of the binary parameters that a piece holds
+param @color information about one of the binary parameters that a piece holds
+param @line information about one of the binary parameters that a piece holds
+param @number information about one of the binary parameters that a piece holds
 """
 class Piece:
     def __init__(self, id, shape, color, line, number):
@@ -322,11 +322,11 @@ class AI():
     param @maximizingPlayer if the algorithm should be on min or max stage
     """
     def alphabeta(self, board, remainingPiecesCopy, nextPieceCopy, depth, a, b, maximizingPlayer):
-        if (depth > 10):
-           print("rand")
-           locInfo = self.randomLocation(board)
-           npInfo = self.randomNP(remainingPiecesCopy)
-           return moveInfo(0, locInfo[0], locInfo[1], npInfo)
+        #if (depth > 10):
+        #   print("rand")
+        #   locInfo = self.randomLocation(board)
+        #   npInfo = self.randomNP(remainingPiecesCopy)
+        #   return moveInfo(0, locInfo[0], locInfo[1], npInfo)
         print(board)
         if (Game.GAME_ENDED(board)):
             if (maximizingPlayer):
