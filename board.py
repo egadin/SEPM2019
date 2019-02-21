@@ -1,31 +1,42 @@
+"""
+This implements the UU-GAME game platform.
+
+(c) 2019 SEPM Group G
+"""
 import Tkinter as tk
 import numpy as np
 import random
 import copy
 from PIL import Image, ImageTk
 from os import path
+#import mainpage * as main
 
 """
 Game class param @player1 name of first player @player2 name of second player, @AI the Ai that should be used
 global canvasRP the box where remaining pieces are shown
-global imageLocationsRP the cords to the images in canvasRP
-global imagePaths the img folder
+global imageLocationsRP the coords to the images in canvasRP
+global imagePaths to the img folder
 """
 class Game:
     def __init__(self, player1, player2, AI):
-        global canvasRP
+        global canvasRP # Canvas w remaining pieces
         global imageLocationsRP
         global imagePaths
+        # Attributes of the Game class
+        # Fills with None of type np.object
         self.board = np.full((4,4), None, dtype = np.object_)
         self.pieces = [Piece(1,"square","black","line",1),Piece(2,"square","black","line",0),Piece(3,"square","black","dotted",1),Piece(4,"square","black","dotted",0),Piece(5,"square","white","line",1),Piece(6,"square","white","line",0),Piece(7,"square","white","dotted",1),Piece(8,"square","white","dotted",0),
         Piece(9,"round","black","line",1),Piece(10,"round","black","line",0),Piece(11,"round","black","dotted",1),Piece(12,"round","black","dotted",0),Piece(13,"round","white","line",1),Piece(14,"round","white","line",0),Piece(15,"round","white","dotted",1),Piece(16,"round","white","dotted",0)]
         self.remainingPieces = self.pieces
-        self.nextPiece = Piece(0,0,0,0,0)
+        self.nextPiece = None
         self.turncount = 0
+        # Next thing for the event handler
         self.event = 2
+        # Names of players
         self.player1 = player1
         self.player2 = player2
         self.exception = False
+        # Inintiates the remaning pieces on the screen
         self.indexRemainingPieces = [canvasRP.create_image(imageLocationsRP[c], image=imagePaths[c]['small']) for c in range(16)]
         self.nextPieceImg = None
         self.AI = AI
@@ -38,6 +49,8 @@ class Game:
     @staticmethod
     def GAME_ENDED(board):
             for prop in ['shape', 'color', 'line', 'number']:
+                # Check if a complete row is possible otherwise it goes to column check
+                # (enough to check first place)
                 for row in range(0, 4):
                     if not board[0, row]:
                         continue
@@ -51,6 +64,7 @@ class Game:
                     else:
                         return True
 
+                # Check if a complete column is possible otherwise it goes to diagonal check
                 for col in range(0, 4):
                     if not board[col, 0]:
                         continue
@@ -64,6 +78,7 @@ class Game:
                     else:
                         return True
 
+                # Diagonal check
                 if board[0, 0]:
                     for diag in range(1, 4):
                         if not board[diag, diag]:
@@ -85,6 +100,34 @@ class Game:
                         return True
 
             return False
+
+    """
+    The central game cordinator, gets called on user inputs and sends out calls to
+    the correct methods to continue the game
+    calls on the AI if a player is None
+    event 3 is quit and fets called when a player inputs 0 in givePiece function
+    param @e is dummy, forced by the caller
+    """
+    def EVENT_HANDLER(self, e):
+        # Event values
+        # - 1: layPiece
+        # - 2: givePiece
+        # - 3: quit
+        if (self.event == 2):
+            self.givePiece()
+            if (self.exception != True):
+                self.event = 1
+                self.GAME_TURN()
+        elif (self.event == 1):
+            if (((1 + self.turncount % 2) != 1) and self.player2 == None):
+                self.AIturn()
+            else:
+                self.layPiece()
+                if (self.exception != True):
+                    self.event = 2
+                    self.GAME_TURN()
+        elif (self.event == 3): #Here you can call you function to go back to the main screen
+            quit
 
     """
     Method for a human player to give a piece to the opponent
@@ -124,6 +167,7 @@ class Game:
     """
     def layPiece(self):
         global canvasNP
+        # User enters 0-16, decrement by 1 to make it -1 to 15
         cont = contents.get() - 1
         column = cont % 4
         row = cont // 4
@@ -138,7 +182,7 @@ class Game:
             InstructionEntry.delete(first=0,last=10)
             self.board[row,column] = self.nextPiece
             if(Game.GAME_ENDED(self.board)==True):
-                print("ended")
+                print("ended") #here you can go back and break loop and such
             self.pieceCanvas(self.nextPiece.id, cont)
             canvasNP.delete(self.nextPieceImg)
 
@@ -157,28 +201,6 @@ class Game:
         global imageLocationsGB
         canvasGB.create_image(imageLocationsGB[canvas], image=imagePaths[id-1]['regular'])
 
-    """
-    The central game cordinator, gets called on user inputs and sends out calls to
-    the correct methods to continue the game
-    calls on the AI if a player is None
-    event 3 is quit and fets called when a player inputs 0 in givePiece function
-    """
-    def EVENT_HANDLER(self, e):
-        if (self.event == 2):
-            self.givePiece()
-            if (self.exception != True):
-                self.event = 1
-                self.GAME_TURN()
-        elif (self.event == 1):
-            if (((1 + self.turncount % 2) != 1) and self.player2 == None):
-                self.AIturn()
-            else:
-                self.layPiece()
-                if (self.exception != True):
-                    self.event = 2
-                    self.GAME_TURN()
-        elif (self.event == 3):
-            quit
 
     """
     Calling the alpha beta AI for cords and a next piece
@@ -189,12 +211,13 @@ class Game:
     def AIturn(self):
         global canvasNP
         global imagePaths
+        # Returns moveInfo object
         AImove = self.AI.makeBestMove(self.board, self.remainingPieces, self.nextPiece) #skickar jag in riktiga eller copierar jag bara?
         print(AImove.location, AImove.score)
         self.board[AImove.location] = self.nextPiece
         print(self.board)
         if(Game.GAME_ENDED(self.board)==True):
-            print("ended")
+            print("ended") #Do fancy stuff if you wannt to quit
         self.pieceCanvas(self.nextPiece.id, AImove.location[0]*4 + AImove.location[1])
         canvasNP.delete(self.nextPieceImg)
         self.nextPiece = AImove.nextPiece
@@ -219,6 +242,7 @@ class Game:
             InstructionLabel.config(text='Number of piece to give away (1-16):')
 
     """
+    Handles remaining pieces (currently only deletes)
     Options for canvasRP supports delete as of now since it's initiated elsewhere
     param @action which action you want to perform in the handler
     param @number which piece you want to remove from the box
@@ -231,11 +255,11 @@ class Game:
 
 """
 Class containing the structure for a pieces
-param@ id identification for each piece so you can acces them
-param@ shape information about one of the binary parameters that a piece holds
-param@ color information about one of the binary parameters that a piece holds
-param@ line information about one of the binary parameters that a piece holds
-param@ number information about one of the binary parameters that a piece holds
+param @id identification for each piece so you can acces them
+param @shape information about one of the binary parameters that a piece holds
+param @color information about one of the binary parameters that a piece holds
+param @line information about one of the binary parameters that a piece holds
+param @number information about one of the binary parameters that a piece holds
 """
 class Piece:
     def __init__(self, id, shape, color, line, number):
@@ -246,7 +270,7 @@ class Piece:
         self.number = number
 
 """
-Class containing the AI which is based on minMax algorithm with alpha beta prouning
+Class containing the AI which is based on miniMax algorithm with alpha beta prouning
 holds information about what difficulty you want to play on
 otherwise it takes in the required information in it's functions to make a move absed on the current playing field
 param @difficulty the difficulty you want to playy on in string format
@@ -262,42 +286,42 @@ class AI():
     param @remainingPiecesCopy the array of remaining pieces
     param @nextPieceCopy the next piece that the AI should place
     """
-    def makeBestMove(self, board, remainingPiecesCopy, nextPieceCopy):
+    def makeBestMove(self, board, remainingPieces, nextPiece):
         rand = 1 #random.randint(1,11)
         boardCopy = copy.deepcopy(board)
 
         if (self.difficulty == "easy"):
             if (rand > 1):
                 locInfo = self.randomLocation(board)
-                npInfo = self.randomNP(remainingPiecesCopy)
+                npInfo = self.randomNP(remainingPieces)
                 return moveInfo(0, locInfo[0], locInfo[1], npInfo)
             else:
-                return self.alphabeta(boardCopy, remainingPiecesCopy, nextPieceCopy, 0, float('-inf'), float('inf'), True)
+                return self.alphabeta(boardCopy, remainingPieces, nextPiece, 0, float('-inf'), float('inf'), True)
 
         elif (self.difficulty == "medium"):
             if (rand > 3):
                 locInfo = self.randomLocation(board)
-                npInfo = self.randomNP(remainingPiecesCopy)
+                npInfo = self.randomNP(remainingPieces)
                 return moveInfo(0, locInfo[0], locInfo[1], npInfo)
             else:
-                return self.alphabeta(boardCopy, remainingPiecesCopy, nextPieceCopy, 0, float('-inf'), float('inf'), True)
+                return self.alphabeta(boardCopy, remainingPieces, nextPiece, 0, float('-inf'), float('inf'), True)
 
         elif (self.difficulty == "hard"):
             if (rand > 7):
                 locInfo = self.randomLocation(board)
-                npInfo = self.randomNP(remainingPiecesCopy)
+                npInfo = self.randomNP(remainingPieces)
                 return moveInfo(0, locInfo[0], locInfo[1], npInfo)
             else:
-                return self.alphabeta(boardCopy, remainingPiecesCopy, nextPieceCopy, 0, float('-inf'), float('inf'), True)
+                return self.alphabeta(boardCopy, remainingPieces, nextPiece, 0, float('-inf'), float('inf'), True)
 
     """
     Randomizes a location on the gameboard from all the empty tiles
-    and returns it's cordinates
+    and returns its cordinates
     param @board the current gameboard
     """
     def randomLocation(self, board):
-        pieces = [(board[i % 4, i // 4], (i % 4, i // 4), i) for i in range(0, 15)]
-        pieces = filter(lambda (piece, coord, loc): piece is None, pieces)
+        pieces = [(board[i % 4, i // 4], (i % 4, i // 4), i) for i in range(0, 15)]  #creates array for the matrix
+        pieces = filter(lambda (piece, coord, loc): piece is None, pieces) """dubbelceck this should return coords"""
         piece = random.choice(pieces)
         return (piece[1], piece[2])
 
