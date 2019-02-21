@@ -25,8 +25,8 @@ class Game:
         # Attributes of the Game class
         # Fills with None of type np.object
         self.board = np.full((4,4), None, dtype = np.object_)
-        self.pieces = [Piece(1,"square","black","line",1),Piece(2,"square","black","line",0),Piece(3,"square","black","dotted",1),Piece(4,"square","black","dotted",0),Piece(5,"square","white","line",1),Piece(6,"square","white","line",0),Piece(7,"square","white","dotted",1),Piece(8,"square","white","dotted",0),
-        Piece(9,"round","black","line",1),Piece(10,"round","black","line",0),Piece(11,"round","black","dotted",1),Piece(12,"round","black","dotted",0),Piece(13,"round","white","line",1),Piece(14,"round","white","line",0),Piece(15,"round","white","dotted",1),Piece(16,"round","white","dotted",0)]
+        self.pieces = [Piece(1,"round","black","dotted",0),Piece(2,"round","black","dotted",1),Piece(3,"round","black","line",0),Piece(4,"round","black","line",1),Piece(5,"round","blue","dotted",0),Piece(6,"round","blue","dotted",1),Piece(7,"round","blue","line",0),Piece(8,"round","blue","line",1),
+        Piece(9,"square","black","dotted",0),Piece(10,"square","black","dotted",1),Piece(11,"square","black","line",0),Piece(12,"square","black","line",1),Piece(13,"square","blue","dotted",0),Piece(14,"square","blue","dotted",1),Piece(15,"square","blue","line",0),Piece(16,"square","blue","line",1)]
         self.remainingPieces = self.pieces
         self.nextPiece = None
         self.turncount = 0
@@ -119,7 +119,7 @@ class Game:
                 self.event = 1
                 self.GAME_TURN()
         elif (self.event == 1):
-            if (((1 + self.turncount % 2) != 1) and self.player2 == None):
+            if ((((1 + self.turncount % 2) != 1) and self.player2 == None) or ((1 + self.turncount % 2) == 1) and self.player1 == None):
                 self.AIturn()
             else:
                 self.layPiece()
@@ -151,6 +151,8 @@ class Game:
             self.canvasRPhandler("delete", self.nextPiece.id-1)
             InstructionEntry.delete(first=0,last=10)
             self.turncount += 1
+            if (self.player1 == None or self.player2 == None):
+                self.AIturn()
         else:
             if (contents.get() == 0):
                 self.event = 3
@@ -183,7 +185,9 @@ class Game:
             self.board[row,column] = self.nextPiece
             if(Game.GAME_ENDED(self.board)==True):
                 print("ended") #here you can go back and break loop and such
+            print(self.nextPiece)
             self.pieceCanvas(self.nextPiece.id, cont)
+            print(self.board)
             canvasNP.delete(self.nextPieceImg)
 
     """
@@ -212,8 +216,9 @@ class Game:
         global canvasNP
         global imagePaths
         # Returns moveInfo object
+        print(self.nextPiece)
         AImove = self.AI.makeBestMove(self.board, self.remainingPieces, self.nextPiece) #skickar jag in riktiga eller copierar jag bara?
-        print(AImove.location, AImove.score)
+        print(AImove.location, AImove.score, AImove.nextPiece)
         self.board[AImove.location] = self.nextPiece
         print(self.board)
         if(Game.GAME_ENDED(self.board)==True):
@@ -270,6 +275,9 @@ class Piece:
         self.color = color
         self.line = line
         self.number = number
+
+    def __repr__(self):
+        return "Piece(%d, %s, %s, %s, %d)" % (self.id, self.shape, self.color, self.line, self.number)
 
 """
 Class containing the AI which is based on miniMax algorithm with alpha beta prouning
@@ -353,84 +361,83 @@ class AI():
     param @maximizingPlayer if the algorithm should be on min or max stage
     """
     def alphabeta(self, board, remainingPieces, nextPiece, depth, a, b, maximizingPlayer):
-        if (remainingPieces == []):
-            print("return no pieces remaining")
-            return moveInfo(0,None,None,None)
-        elif (Game.GAME_ENDED(board)):
-            if (maximizingPlayer):
-                print(board)
-                print("return max")
-                return moveInfo(depth-20, None,None,None)
-            else:
-                print(board)
-                print("return min")
-                return moveInfo(20-depth,None,None,None)
-        elif (depth > 2 ):
+        if (len(remainingPieces)>=15):
            locInfo = self.randomLocation(board)
            npInfo = self.randomNP(remainingPieces)
-           print("return random")
            return moveInfo(0, locInfo[0], locInfo[1], npInfo)
-
-        if (maximizingPlayer):
-            value = moveInfo(float('-inf'),None,None,None)
-            boardCopy = copy.deepcopy(board)
-            for i in range(len(boardCopy)):
-                for j in range(len(boardCopy[i])):
-                    if (boardCopy[i,j] == None):
-                        boardCopy[i,j] = nextPiece
-
-                        for k in range(len(remainingPieces)):
-                            remainingPiecesCopy = copy.deepcopy(remainingPieces)
-                            nextPieceCopy = remainingPiecesCopy[k]
-                            remainingPiecesCopy.remove(nextPieceCopy)
-                            currentMove = self.alphabeta(boardCopy, remainingPiecesCopy, nextPieceCopy, depth + 1, a, b, False)
-                            if (value.score <= currentMove.score):
-                                value.score = currentMove.score
-                                if (currentMove.locationInt==None):
-                                    value.location = (i,j)
-                                    value.locationInt = i + j*4
-                                    value.nextPiece = nextPieceCopy
-                                else:
-                                    value.location = currentMove.location
-                                    value.locationInt = currentMove.locationInt
-                                    value.nextPiece = currentMove.nextPiece
-
-                            a = max(a, value)
-                            if (a >= b):
-                                break
-                        boardCopy[i,j] = None
-            return value
         else:
-            value = moveInfo(float('inf'),None,None,None)
-            boardCopy = copy.deepcopy(board)
-            for i in range(len(boardCopy)):
-                for j in range(len(boardCopy[i])):
-                    if (boardCopy[i,j] == None):
-                        boardCopy[i,j] = nextPiece
+            if (remainingPieces == []):
+                return moveInfo(0,None,None,None)
+            elif (Game.GAME_ENDED(board)):
+                if (maximizingPlayer):
+                    return moveInfo(depth-20, None,None,None)
+                else:
+                    return moveInfo(20-depth,None,None,None)
+            elif (depth > 3):
+               locInfo = self.randomLocation(board)
+               npInfo = self.randomNP(remainingPieces)
+               return moveInfo(0, locInfo[0], locInfo[1], npInfo)
 
-                        for k in range(len(remainingPieces)):
-                            remainingPiecesCopy = copy.deepcopy(remainingPieces)
-                            nextPieceCopy = remainingPiecesCopy[k]
-                            remainingPiecesCopy.remove(nextPieceCopy)
-                            currentMove = self.alphabeta(boardCopy, remainingPiecesCopy, nextPieceCopy, depth + 1, a, b, True)
+            if (maximizingPlayer):
+                value = moveInfo(float('-inf'),None,None,None)
+                boardCopy = copy.deepcopy(board)
+                for i in range(len(boardCopy)):
+                    for j in range(len(boardCopy[i])):
+                        if (boardCopy[i,j] == None):
+                            boardCopy[i,j] = nextPiece
 
-                            if (value.score >= currentMove.score):
-                                value.score = currentMove.score
-                                if (currentMove.locationInt==None):
-                                    value.location = (i,j)
-                                    value.locationInt = i + j*4
-                                    value.nextPiece = nextPieceCopy
-                                else:
-                                    value.location = currentMove.location
-                                    value.locationInt = currentMove.locationInt
-                                    value.nextPiece = currentMove.nextPiece
+                            for k in range(len(remainingPieces)):
+                                remainingPiecesCopy = copy.deepcopy(remainingPieces)
+                                nextPieceCopy = remainingPiecesCopy[k]
+                                remainingPiecesCopy.remove(nextPieceCopy)
+                                currentMove = self.alphabeta(boardCopy, remainingPiecesCopy, nextPieceCopy, depth + 1, a, b, False)
+                                if (value.score <= currentMove.score):
+                                    value.score = currentMove.score
+                                    if (currentMove.locationInt==None):
+                                        value.location = (i,j)
+                                        value.locationInt = i + j*4
+                                        value.nextPiece = nextPieceCopy
+                                    else:
+                                        value.location = currentMove.location
+                                        value.locationInt = currentMove.locationInt
+                                        value.nextPiece = currentMove.nextPiece
 
-                            b = min(b, value)
-                            if (a >= b):
-                                break
+                                a = max(a, value)
+                                if (a >= b):
+                                    break
+                            boardCopy[i,j] = None
+                return value
+            else:
+                value = moveInfo(float('inf'),None,None,None)
+                boardCopy = copy.deepcopy(board)
+                for i in range(len(boardCopy)):
+                    for j in range(len(boardCopy[i])):
+                        if (boardCopy[i,j] == None):
+                            boardCopy[i,j] = nextPiece
 
-                        boardCopy[i,j] = None
-            return value
+                            for k in range(len(remainingPieces)):
+                                remainingPiecesCopy = copy.deepcopy(remainingPieces)
+                                nextPieceCopy = remainingPiecesCopy[k]
+                                remainingPiecesCopy.remove(nextPieceCopy)
+                                currentMove = self.alphabeta(boardCopy, remainingPiecesCopy, nextPieceCopy, depth + 1, a, b, True)
+
+                                if (value.score >= currentMove.score):
+                                    value.score = currentMove.score
+                                    if (currentMove.locationInt==None):
+                                        value.location = (i,j)
+                                        value.locationInt = i + j*4
+                                        value.nextPiece = nextPieceCopy
+                                    else:
+                                        value.location = currentMove.location
+                                        value.locationInt = currentMove.locationInt
+                                        value.nextPiece = currentMove.nextPiece
+
+                                b = min(b, value)
+                                if (a >= b):
+                                    break
+
+                            boardCopy[i,j] = None
+                return value
 
 
 #    def maxMove(self, depth, boardCopy, remainingPieces, nextPiece):
