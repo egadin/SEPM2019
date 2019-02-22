@@ -529,6 +529,7 @@ class moveInfo():
 The game init values
 mostly startup of different canvases and GUI boxes
 aswell as creating a Game and AI
+ - root is the main window that holds all the panes (called canvases)
 """
 root = tk.Tk()
 canvasGB = tk.Canvas(root, bg="white", height=1031, width=1031)
@@ -552,7 +553,7 @@ for x in range(4):
 
 imageLocationsGB = [[130,130],[387,130],[644,130],[901,130],[130,387],[387,387],[644,387],[901,387],[130,644],[387,644],[644,644],[901,644],[130,901],[387,901],[644,901],[901,901]]
 imagePaths = [
-    tk.PhotoImage(file = path.dirname(__file__) + '/img/p' + str(i) + '.gif')
+    tk.PhotoImage(file = path.dirname(__file__) + '/imgClr1/p' + str(i) + '.gif')
     for i in range(1, 17)
 ]
 imagePaths = [
