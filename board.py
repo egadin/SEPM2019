@@ -283,7 +283,7 @@ class Piece:
 Class containing the AI which is based on miniMax algorithm with alpha beta prouning
 holds information about what difficulty you want to play on
 otherwise it takes in the required information in it's functions to make a move absed on the current playing field
-param @difficulty the difficulty you want to playy on in string format
+param @difficulty the difficulty you want to play on in string format
 """
 class AI():
     def __init__(self, difficulty):
@@ -560,7 +560,7 @@ imagePaths = [
 imagePaths = [
     {
         "regular": image,
-        "small": image.subsample(2)
+        "small": image.subsample(3)
     }
     for image in imagePaths
 ]
