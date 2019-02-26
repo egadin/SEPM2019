@@ -20,6 +20,7 @@ import Tkinter as tk # tkinter in Py3
 # from Tkinter import messagebox  # used for error messages Py3
 import tkMessageBox
 
+
 # Game constants
 welcomeScreenTexts = ("UU-GAME",
                       "Welcome to UU-GAME",
@@ -52,6 +53,7 @@ winBGcolor = "light grey"
 
 # Create main window, called "root"
 root = tk.Tk()
+# width x height
 root.geometry("620x650")
 root.resizable(0, 0)  # Don't allow resizing in the x or y direction
 root.title(welcomeScreenTexts[0])
@@ -79,10 +81,10 @@ promptText1 = tk.Label(welcomeCanvas, font=("Helvetica", 14), justify=tk.LEFT, t
 promptText1.place(x=leftMarginPos, y=playerPromptTopPos, height=40, width=600)
 
 # Prompt text for radio buttons
-promptText1 = tk.Label(welcomeCanvas, anchor=tk.CENTER, bg="snow", font=("Helvetica", 14), text=welcomeScreenTexts[3])
+promptText1 = tk.Label(welcomeCanvas, anchor=tk.CENTER, font=("Helvetica", 14), text=welcomeScreenTexts[3])
 promptText1.place(x=leftMarginPos, y=player1ButtonTopPos, height=60, width=150)
 
-promptText2 = tk.Label(welcomeCanvas, anchor=tk.CENTER, bg="snow", font=("Helvetica", 14), text=welcomeScreenTexts[4])
+promptText2 = tk.Label(welcomeCanvas, anchor=tk.CENTER, font=("Helvetica", 14), text=welcomeScreenTexts[4])
 promptText2.place(x=leftMarginPos, y=player2ButtonTopPos, height=60, width=150)
 
 # Selection of first player
@@ -151,12 +153,14 @@ def startgamecallback():
     # Verify that player 1 is human & has a name or is computer
     if (rb1value.get() == 1) and (player1nameWidget.get() == ""):
         # Post error message "Player 1 name may not be empty"
-        tk.messagebox.showerror(welcomeScreenTexts[6], welcomeScreenTexts[7])
+        tkMessageBox.showerror(welcomeScreenTexts[6], welcomeScreenTexts[7])
+        # tk.messagebox.showerror(welcomeScreenTexts[6], welcomeScreenTexts[7])
         return
 
     if (rb2value.get() == 1) and (player2nameWidget.get() == ""):
         # Post error message "Player 2 name may not be empty"
-        tk.messagebox.showerror(welcomeScreenTexts[6], welcomeScreenTexts[8])
+        tkMessageBox.showerror(welcomeScreenTexts[6], welcomeScreenTexts[8])
+        # tk.messagebox.showerror(welcomeScreenTexts[6], welcomeScreenTexts[8])
         return
 
     # Start the game here, from this callback
@@ -164,6 +168,12 @@ def startgamecallback():
     #  - rb1value.get() = 1 ==> human player 1
     #  - rb1value.get() = 2 ==> computer player 1
     #  - player1nameWidget.get() ==> human player 1 name
+
+    # At the end, terminate close this Window
+    root.withdraw()
+    root.destroy()
+
+    initgamescreen()
 
 
 # Start game button

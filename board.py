@@ -250,7 +250,7 @@ class Game:
 
     """
     Handles remaining pieces (currently only deletes)
-    Options for canvasRP supports delete as of now since it's initiated elsewhere
+    Options for canvasRP supports delete as of now since its initiated elsewhere
     param @action which action you want to perform in the handler
     param @number which piece you want to remove from the box
     global canvasRP the box for remaining pieces
@@ -532,6 +532,7 @@ aswell as creating a Game and AI
  - root is the main window that holds all the panes (called canvases)
 """
 root = tk.Tk()
+root.geometry("1400x1030")
 canvasGB = tk.Canvas(root, bg="white", height=1031, width=1031)
 canvasGB.place(x=301,y=0, width=1031, height=1031)
 canvasRP = tk.Canvas(root, bg="light grey", height=1031, width=300)
@@ -559,7 +560,7 @@ imagePaths = [
 imagePaths = [
     {
         "regular": image,
-        "small": image.subsample(3)
+        "small": image.subsample(2)
     }
     for image in imagePaths
 ]
