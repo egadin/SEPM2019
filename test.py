@@ -160,17 +160,19 @@ two for output and one for input -- that it uses for player interaction.
 Accessor methods are available for updating and reading values.
 """
 class IOarea:
+    """
+    Sets up three text areas for:
+    - PlayerLabel - player name prompt
+    - InstructionLabel - what to do next
+    - InstructioEntry - user entry
+    Provides accessor methods
+    Args:
+    @root - window to draw on
+    @x_start - x position to start drawing on
+    @y_start - y position to start drawing on
+    """
     def __init__(self, root, x_start, y_start):
-        """
-        Sets up three text areas for:
-        PlayerLabel - player name prompt
-        InstructionLabel - what to do next
-        InstructioEntry - user entry
-        Args:
-        @root - window to draw on
-        @x_start - x position to start drawing on
-        @y_start - y position to start drawing on
-        """
+
         #global PlayerLabel
         #global InstructionLabel
         #global InstructionEntry
