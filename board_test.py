@@ -1,5 +1,5 @@
 """
-This implements the UU-GAME game platform.
+This implements the UU-GAME Game Platform and Game Engine (AI).
 
 (c) 2019 SEPM Group G
 """
@@ -149,7 +149,7 @@ class Game:
             if (self.remainingPieces[piece].id == terminalIO.getInstruction()):
                 self.nextPiece = self.remainingPieces[piece]  #nextpiece start as (0,0,0,0,0)
                 found = True
-                self.nextPieceImg = canvasNP.create_image([100,100], image=imagePaths[piece]['medium'])
+                self.nextPieceImg = canvasNP.create_image([50,50], image=imagePaths[piece]['medium'])
         if (found == True):
             self.exception = False
             self.remainingPieces.remove(self.nextPiece)
@@ -245,7 +245,7 @@ class Game:
         for x in range(0,len(self.remainingPieces)):
             if (self.remainingPieces[x].id == AImove.nextPiece.id):
                 self.nextPiece = self.remainingPieces[x]
-        self.nextPieceImg = canvasNP.create_image([100,100], image=imagePaths[self.nextPiece.id - 1]['medium'])
+        self.nextPieceImg = canvasNP.create_image([50,50], image=imagePaths[self.nextPiece.id - 1]['medium'])
         self.remainingPieces.remove(self.nextPiece)
         self.canvasRPhandler("delete", self.nextPiece.id-1)
         self.turncount += 1
@@ -589,28 +589,30 @@ class IOarea:
 
         self.outputTexts = {
             "instructionSelect1" : "Select piece to give away (number 1-16)\nand hit return. 0 terminates the game",
-            "instructionSelect2" : "Enter piece number to give away (1-16)",
+            "instructionSelect2" : "Select piece to give away (1-16)",
             "instructionError1" : "Nonexisting piece. Please choose a piece that is left (1-16)",
             "instructionError2" : "Nonexisting or taken tile. Please select a free tile number (1-16)",
             "instructionPlace1" : "Place offered piece on the board by selecting a tile number (1-16)",
-            "instructionPlace2" : ""
+            "instructionPlace2" : "",
+            "winning" : "Winning move. Game ends.",
+            "tie" : "Game is tied."
             }
 
         # Prompt for player (player 1 or 2)
         PlayerLabel = tk.Label(root, text="Player 1", font=("Helvetica", 14))
-        PlayerLabel.place(x = x_start, y = (y_start + 10))
+        PlayerLabel.place(x = x_start, y = (y_start + 25))
         self.PlayerLabel = PlayerLabel
 
         # Instructions to player
         InstructionLabel = tk.Label(root, text=self.outputTexts["instructionSelect1"], font=("Helvetica", 14), anchor="w")
-        InstructionLabel.place(x=x_start, y=(y_start + 45))
+        InstructionLabel.place(x=x_start, y=(y_start + 57))
         self.InstructionLabel = InstructionLabel
         contents = tk.IntVar()
         self.contents = contents
 
         # Players entry field
         InstructionEntry = tk.Entry(root, bd = 5, textvariable=contents, bg="snow", relief=tk.SUNKEN, font=("Helvetica", 14))
-        InstructionEntry.place(x=x_start, y=(y_start + 110))
+        InstructionEntry.place(x=x_start, y=(y_start + 95))
         self.InstructionEntry = InstructionEntry
 
         # Clear entry
@@ -705,8 +707,8 @@ def initGameScreen(root):
 
     # Next piece canvas
     xStartNP = side + gap + line + 10
-    canvasNP = tk.Canvas(root, bg="light grey")
-    canvasNP.place(x=xStartNP, y=(4 * (side + gap + line) + 10), width = (side + line), height = (side + line))
+    canvasNP = tk.Canvas(root, bg="light grey", relief=tk.RAISED)
+    canvasNP.place(x=xStartNP, y=(4 * (side + gap + line) + 40), width=round(1.15 * side / 2), height=round(1.15 *side / 2))
 
     # Game Boad canvas
     xStartGB = side + gap + line +10
@@ -730,7 +732,7 @@ def initRPcanvas( root ):
 
     # Canvas dimensions
     widthRP = 150
-    heightRP = 930
+    heightRP = 890
 
     # Icon placement positions (a column)
     x_offset = 80  # x position of images
@@ -747,7 +749,7 @@ def initRPcanvas( root ):
 
     # Set up icon locations in file system
     imagePaths = [
-        tk.PhotoImage(file = path.dirname(__file__) + '/imgClr1/p' + str(i) + '.gif')
+        tk.PhotoImage(file = path.dirname(__file__) + '/imgClr3/p' + str(i) + '.gif')
         for i in range(1, 17)
     ]
 
@@ -789,7 +791,7 @@ root.geometry("1000x800")
 # GBheight is the height of the game squares canvas
 imageLocationsGB, GBheight = initGameScreen(root)
 imagePaths, imageLocationsRP, indexRemainingPieces = initRPcanvas(root)
-terminalIO = IOarea(root, 430, GBheight + 10)
+terminalIO = IOarea(root, 335, GBheight + 10)
 
 #canvasGB = tk.Canvas(root, bg="white", height=1031, width=1031)
 #canvasGB.place(x=301,y=0, width=1031, height=1031)

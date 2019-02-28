@@ -155,7 +155,7 @@ def initRPcanvas( root ):
     return imagePaths
 
 """
-This class implements the terminal IO displayself. It has three fields --
+This class implements the terminal IO display. It has three fields --
 two for output and one for input -- that it uses for player interaction.
 Accessor methods are available for updating and reading values.
 """
@@ -212,13 +212,14 @@ class IOarea:
 
 
 """
-Starts the GAME_ENDEDArgs:
-@player1name - (string) name of first player -- may be Null if AI is selected
-@player2name - (string) name of second player -- may be Null if AI is selected
-@player1orAI - player 1: 1 ==> human, 2 ==> AI
-@player2orAI - player 2: 1 ==> human, 2 ==> AI
-@AI1level - (string) easy, medium, or hard
-@AI2level - (string) easy, medium, or hard
+Starts the game
+Args:
+param @player1name - (string) name of first player -- may be Null if AI is selected
+param @player2name - (string) name of second player -- may be Null if AI is selected
+param @player1orAI - player 1: 1 ==> human, 2 ==> AI
+param @player2orAI - player 2: 1 ==> human, 2 ==> AI
+param @AI1level - (string) easy, medium, or hard
+param @AI2level - (string) easy, medium, or hard
 """
 def initGame(player1name, player2name, player1orAI, player2orAI, AI1level, AI2level):
     root = tk.Tk()
