@@ -219,7 +219,7 @@ class Game:
     def nextpiece_event(data):
         global canvasNP
         global imagePaths
-        self.nextPiece = data
+        self.nextPiece = Piece(data.id, data.shape, data.color, data.line, data.number)
         self.nextPieceImg = canvasNP.create_image([100,100], image=imagePaths[self.nextPiece.id-1]['regular'])
         self.remainingPieces.remove(self.nextPiece)
         self.canvasRPhandler("delete", self.nextPiece.id-1)
@@ -353,7 +353,7 @@ class AI():
     param @nextPieceCopy the next piece that the AI should place
     """
     def makeBestMove(self, board, remainingPieces, nextPiece, turncount):
-        rand = 1 #random.randint(1,11)
+        rand = random.randint(1,11)
         boardCopy = copy.deepcopy(board)
 
         if (self.difficulty == "easy"):
@@ -496,81 +496,6 @@ class AI():
                 return value
 
 
-#    def maxMove(self, depth, boardCopy, remainingPieces, nextPiece):
-#        print("max")
-#        if depth > 15:
-#            print("rand")
-#            locInfo = self.randomLocation(boardCopy)
-#            npInfo = self.randomNP(remainingPieces)
-#            return moveInfo(0, locInfo[0], locInfo[1], npInfo)
-#
-#        remainingPiecesCopy = copy.copy(remainingPieces)
-#        nextPieceCopy = copy.copy(nextPiece)
-#        if (Game.GAME_ENDED(boardCopy) == True):
-#            return moveInfo(20-depth,None,None,None)
-#
-#        max = moveInfo(float('-inf'),None,None,None)
-#
-#        for i in range(len(boardCopy)):
-#            for j in range(len(boardCopy[i])):
-#                if (boardCopy[i,j] == None):
-#                    boardCopy[i,j] = nextPieceCopy
-#
-#                    for k in range(len(remainingPiecesCopy)):
-#                        nextPieceCopy = remainingPiecesCopy[k]
-#                        remainingPiecesCopy.remove(nextPieceCopy)
-#
-#                        currentMove = self.minMove(depth + 1, boardCopy, remainingPiecesCopy, nextPieceCopy)
-#                        print(currentMove.score)
-#                        if (currentMove.score > max.score):
-#                            max.score = currentMove.score
-#                            max.location = (i, j)
-#                            max.locationInt = i*4 + j
-#                            max.nextPiece = nextPieceCopy
-#
-#                        remainingPiecesCopy.append(nextPieceCopy)
-#
-#                    boardCopy[i,j] = None
-#
-#        return max
-#
-#
-#    def minMove(self, depth, boardCopy, remainingPieces, nextPiece):
-#        print("min")
-#        if depth > 15:
-#            print("rand")
-#
-#
-#
-#        remainingPiecesCopy = copy.copy(remainingPieces)
-#        nextPieceCopy = copy.copy(nextPiece)
-#        if (Game.GAME_ENDED(boardCopy) == True):
-#            return moveInfo(depth-20,None,None,None)
-#
-#        min = moveInfo(float('inf'),None,None,None)
-#
-#        for i in range(len(boardCopy)):
-#            for j in range(len(boardCopy[i])):
-#                if (boardCopy[i,j] == None):
-#                    boardCopy[i,j] = nextPieceCopy
-#
-#                    for k in range(len(remainingPiecesCopy)):
-#                        nextPieceCopy = remainingPiecesCopy[k]
-#                        remainingPiecesCopy.remove(nextPieceCopy)
-#
-#                        currentMove = self.maxMove(depth + 1, boardCopy, remainingPiecesCopy, nextPieceCopy)
-#                        print(currentMove.score)
-#                        if (currentMove.score < min.score):
-#                            min.score = currentMove.score
-#                            min.location = (i,j)
-#                            min.locationInt = i*4 + j
-#                            min.nextPiece = nextPieceCopy
-#
-#                        remainingPiecesCopy.append(nextPieceCopy)
-#                    boardCopy[i,j] == None
-#        print(min.score)
-#        return min
-
 """
 Class containing the structure for moveInfo which is the return value for the AI
 """
@@ -580,9 +505,6 @@ class moveInfo():
         self.location = location
         self.locationInt = locationInt
         self.nextPiece = nextpiece
-
-
-
 
 
 """
@@ -721,7 +643,7 @@ height of game board
 def initGameScreen(root):
 
     # Board square size
-    side = 150  # Length of square side
+    side = 180  # Length of square side
     gap = 5     # Gap between the squares
     line = 2    # Extra slack between the squares
 
@@ -734,12 +656,12 @@ def initGameScreen(root):
     global canvasNP
 
     # Next piece canvas
-    xStartNP = 2 * (side + gap + line)
-    canvasNP = tk.Canvas(root, bg="light grey")
-    canvasNP.place(x=xStartNP, y=(4 * (side + gap + line) + 10), width = (side + line), height = (side + line))
+    xStartNP = side + gap + line + 10
+    canvasNP = tk.Canvas(root, bg="light grey", relief=tk.RAISED)
+    canvasNP.place(x=xStartNP, y=(4 * (side + gap + line) + 40), width=round(1.15 * side / 2), height=round(1.15 *side / 2))
 
     # Game Boad canvas
-    xStartGB = 2 * (side + gap + line)
+    xStartGB = side + gap + line +10
     canvasGB = tk.Canvas(root, bg="white")
     canvasGB.place(x=xStartGB, y=0, width=(4 * (side + gap + line) + 5), height=(4 * (side + gap + line) + 5))
     imageLocationsGB = drawGameBoardSquares( canvasGB, side, gap, line );
@@ -757,15 +679,14 @@ Return:
 def initRPcanvas( root ):
     # Export global variables
     global canvasRP
-    global imagePaths
 
     # Canvas dimensions
     widthRP = 150
-    heightRP = 1031
+    heightRP = 890
 
     # Icon placement positions (a column)
     x_offset = 80  # x position of images
-    delta_y = 64  # y distance between images (start at 0)
+    delta_y = 50  # y distance between images (start at 0)
 
     # Remaining pieces canvas
     canvasRP = tk.Canvas(root, bg="light grey")
@@ -778,43 +699,30 @@ def initRPcanvas( root ):
 
     # Set up icon locations in file system
     imagePaths = [
-        tk.PhotoImage(file = path.dirname(__file__) + '/imgClr1/p' + str(i) + '.gif')
+        tk.PhotoImage(file = path.dirname(__file__) + '/imgClr3/p' + str(i) + '.gif')
         for i in range(1, 17)
     ]
 
-    """
-    # Set up dictionary with three sizes of respective image
+    # Set up dictionary with two sizes of respective image
     imagePaths = [
         {
             "regular": image,
-            "small": image.subsample(3)
+            "medium" : image.subsample(2),
+            "small": image.subsample(3),
+            "tiny" : image.subsample(4)
         }
         for image in imagePaths
     ]
-    """
-    imageDicts = []
-    for image in imagePaths:
-        imageDicts.append(
-        {
-            "regular": image,
-            "small": image.subsample(3)
-        })
 
-    print("Number of icons: " + str(len(imageDicts)))
-    for i in range(16):
-        print("Image in pos " + str(i))
-        print(imageDicts[i]['small'])
-
-
+    # List with remaining pieces
+    indexRemainingPieces = []
     # Draw icons in imageLocationsRP on canvas
     for c in range(16):
-        print("Creating small image " + str(c))
-        print(imageDicts[c]['small'])
-        canvasRP.create_image(imageLocationsRP[c], image=imageDicts[c]['small'])
+        indexRemainingPieces.append(canvasRP.create_image(imageLocationsRP[c], image=imagePaths[c]['tiny']))
         lbl = tk.Label(canvasRP, text=str(c + 1), font=("Helvetica", 14), anchor="center", bg="light grey", fg="dim grey")
         lbl.place(x=10, y=imageLocationsRP[c][1] - 25, width=30, height=50)
 
-    return imagePaths
+    return imagePaths, imageLocationsRP, indexRemainingPieces
 
 
 """

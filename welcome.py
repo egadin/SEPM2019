@@ -16,9 +16,9 @@ player).
 
 (c) 2019 SEPM Group G
 """
-import Tkinter as tk # tkinter in Py3
-# from Tkinter import messagebox  # used for error messages Py3
-import tkMessageBox
+import tkinter as tk # tkinter in Py3
+from tkinter import messagebox  # used for error messages Py3
+#import tkMessageBox
 #
 from test import *
 
@@ -210,3 +210,7 @@ startGameButton.place(x=(leftMarginPos + 450), y=(player2ButtonTopPos + 90))
 
 # Launch main event loop
 root.mainloop()
+
+#sio.emit('join game', {'name':xxx})
+#sio.emit('create game')
+#sio.emit('create game', {'player1':xxx, 'player2':xxx})

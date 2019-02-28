@@ -2,7 +2,7 @@
 This is a test file, intended to experiment with calling a function from
 another file.
 """
-import Tkinter as tk # tkinter in Py3
+import tkinter as tk # tkinter in Py3
 from os import path
 from PIL import Image, ImageTk
 
