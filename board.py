@@ -356,6 +356,24 @@ class AI():
         rand = random.randint(1,11)
         boardCopy = copy.deepcopy(board)
 
+        # Lookup table for level of difficulty.
+        # translates names to thresholds for random function
+        level = {
+            "easy" : 1,
+            "medium" : 3,
+            "hard" : 7
+        }
+
+        if (rand > level[self.difficulty]):
+            locInfo = self.randomLocation(board)
+            npInfo = self.randomNP(remainingPieces)
+            return moveInfo(0, locInfo[0], locInfo[1], npInfo)
+        else:
+            return self.alphabeta(boardCopy, remainingPieces, nextPiece, 0, float('-inf'), float('inf'), True, turncount)
+
+        #
+        # These should not be needed, unless more differentiated treatment is desired
+        #
         if (self.difficulty == "easy"):
             if (rand > 1):
                 locInfo = self.randomLocation(board)
@@ -404,8 +422,8 @@ class AI():
         return remainingPiecesCopy[random.randint(0,len(remainingPiecesCopy)-1)]
 
     """
-    The minMax algorithm with alpha beta prouning
-    iterates down through all possible solutions that doesn't get prouned and scores them if they are within a certain search depth
+    The minMax algorithm with alpha beta pruning
+    iterates down through all possible solutions that doesn't get pruned and scores them if they are within a certain search depth
     otherwise it will give a random location and a neutral score
     returns the case with the highest score and sends back cordinates to lay the piece at and a number for the piece to give away
     param @board the gameboard
