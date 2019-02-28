@@ -773,6 +773,69 @@ def initRPcanvas( root ):
 
     return imagePaths, imageLocationsRP, indexRemainingPieces
 
+
+"""
+Inits and starts the game. Launches GUI.
+Args:
+param @player1name - (string) name of first player -- may be Null if AI is selected
+param @player2name - (string) name of second player -- may be Null if AI is selected
+param @player1orAI - player 1: 1 ==> human, 2 ==> AI
+param @player2orAI - player 2: 1 ==> human, 2 ==> AI
+param @AI1level - (string) easy, medium, or hard
+param @AI2level - (string) easy, medium, or hard
+"""
+def initGame(player1name, player2name, player1orAI, player2orAI, AI1level, AI2level):
+
+    print( "Player1 " + player1name )
+    print( "Player2 " + player2name )
+    print( "Player1 or AI " + str(player1orAI) )
+    print( "Player2 or AI " + str(player2orAI) )
+    print( "AI1 " + AI1level )
+    print( "AI2 " + AI2level )
+
+    # Lots of globals
+    global imageLocationsGB
+    global imageLocationsRP
+    global imagePaths
+    global indexRemainingPieces
+    global terminalIO
+
+    root = tk.Tk()
+    root.title("UU Game")
+    root.geometry("1000x800")
+    # GBheight is the height of the game squares canvas
+    imageLocationsGB, GBheight = initGameScreen(root)
+    imagePaths, imageLocationsRP, indexRemainingPieces = initRPcanvas(root)
+    terminalIO = IOarea(root, 335, GBheight + 10)
+
+    # Maybe create AIs
+    tictocAI1 = None
+    tictocPlayer1 = None
+    if (player1orAI == 2):
+        ticotcAI1 = AI(AI1level)
+    else:
+        tictocPlayer1 = player1name
+
+    tictocAI2 = None
+    tictocPlayer2 = None
+    if (player2orAI == 2):
+        ticotcAI2 = AI(AI2level)
+    else:
+        tictocPlayer2 = player2name
+
+    # Set up game
+    tictoc = Game(tictocPlayer1, tictocPlayer2, tictocAI2)
+
+    # This needed when human player input is expected
+    # Starts EVENT_HANDLER when user presses return
+    root.bind('<Return>', tictoc.EVENT_HANDLER)
+
+    # Start the game
+    tictoc.canvasRPhandler("start",1)
+    tictoc.GAME_TURN()
+
+    root.pack_slaves()
+
 """
 ---------------------------------------------------------------------------------------------------
 """
@@ -784,6 +847,8 @@ aswell as creating a Game and AI
  - root is the main window that holds all the panes (called canvases)
 """
 
+# Uncoment this if running standalone
+
 root = tk.Tk()
 root.title("UU Game")
 root.geometry("1000x800")
@@ -792,44 +857,6 @@ imageLocationsGB, GBheight = initGameScreen(root)
 imagePaths, imageLocationsRP, indexRemainingPieces = initRPcanvas(root)
 terminalIO = IOarea(root, 335, GBheight + 10)
 
-#canvasGB = tk.Canvas(root, bg="white", height=1031, width=1031)
-#canvasGB.place(x=301,y=0, width=1031, height=1031)
-#canvasRP = tk.Canvas(root, bg="light grey", height=1031, width=300)
-#canvasRP.place(x=0, y=0, width = 300, height = 1031)
-#imageLocationsRP = [[150,34],[150,98],[150,162],[150,226],[150,290],[150,354],[150,418],[150,482],[150,546],[150,610],[150,674],[150,738],[150,802],[150,866],[150,930],[150,994]]
-#canvasNP = tk.Canvas(root, bg="light grey", height=200, width=200)
-#canvasNP.place(x=100, y=1050, width = 200, height = 200)
-
-"""
-for x in range(4):
-    for y in range(4):
-        canvasGB.create_rectangle(
-            5 + x * 257,
-            5 + y * 257,
-            255 + x * 257,
-            255 + y * 257,
-            fill = 'light grey',
-            width = 5
-        )
-
-imageLocationsGB = [[130,130],[387,130],[644,130],[901,130],[130,387],[387,387],[644,387],[901,387],[130,644],[387,644],[644,644],[901,644],[130,901],[387,901],[644,901],[901,901]]
-imagePaths = [
-    tk.PhotoImage(file = path.dirname(__file__) + '/imgClr1/p' + str(i) + '.gif')
-    for i in range(1, 17)
-]
-imagePaths = [
-    {
-        "regular": image,
-        "small": image.subsample(3)
-    }
-    for image in imagePaths
-]
-contents = tk.IntVar()
-PlayerLabel = tk.Label(root, text="")
-PlayerLabel.place(x = 500, y = 1050)
-InstructionLabel = tk.Label(root, text="")
-InstructionLabel.place(x= 500, y=1085)
-"""
 tictocAI = AI("easy")
 tictoc = Game("1", None, tictocAI)
 root.bind('<Return>', tictoc.EVENT_HANDLER)
