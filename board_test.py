@@ -151,20 +151,20 @@ class Game:
                 found = True
                 self.nextPieceImg = canvasNP.create_image([50,50], image=imagePaths[piece]['medium'])
         if (found == True):
-            self.exception = False
             self.remainingPieces.remove(self.nextPiece)
             self.canvasRPhandler("delete", self.nextPiece.id-1)
             #InstructionEntry.delete(first=0,last=10)
             terminalIO.clearInstructionEntry()
             self.turncount += 1
-            if (self.player1 == None or self.player2 == None):
-                self.AIturn()
+            self.event = None
+            sio.emit('nextPiece', {'id': int(self.nextPiece.id), 'shape': str(self.nextPiece.shape), 'color': str(self.nextPiece.color), 'line': str(self.nextPiece.line), 'number': self.nextPiece.number})
+            #if (self.player1 == None or self.player2 == None):
+             #   self.AIturn()
         else:
             if (terminalIO.getInstruction() == 0):
             #if (contents.get() == 0):
                 self.event = 3
             else:
-                self.exception = True
                 #InstructionEntry.delete(first=0,last=10)
                 #InstructionLabel.config(text='Nonexisting piece, please choose a piece that is left between 1-16:')
                 terminalIO.clearInstructionEntry()
@@ -185,7 +185,6 @@ class Game:
         column = cont % 4
         row = cont // 4
         if (cont < -1 or cont >= 16 or self.board[row,column] != None):
-            self.exception = True
             #InstructionEntry.delete(first=0,last=10)
             #InstructionLabel.config(text='Nonexisting or taken tile please enter free tile between 1-16:')
             terminalIO.clearInstructionEntry()
@@ -194,16 +193,16 @@ class Game:
         elif (cont == -1):
             self.event = 3
         else:
-            self.exception = False
             #InstructionEntry.delete(first=0,last=10)
             terminalIO.clearInstructionEntry();
+            sio.emit('board', cont)
             self.board[row,column] = self.nextPiece
             if(Game.GAME_ENDED(self.board)==True):
                 print("ended") #here you can go back and break loop and such
-            print(self.nextPiece)
             self.pieceCanvas(self.nextPiece.id, cont)
-            print(self.board)
             canvasNP.delete(self.nextPieceImg)
+            self.event = 2
+            self.GAME_TURN()
 
     """
     Help function for layPiece
