@@ -1,3 +1,4 @@
+#!/usr/bin/python
 
 """
 This implements the welcome page for the UU-GAME game platform.
@@ -15,8 +16,12 @@ player).
 
 (c) 2019 SEPM Group G
 """
-import Tkinter as tk
-#from Tkinter import messagebox  # used for error messages
+import Tkinter as tk # tkinter in Py3
+# from Tkinter import messagebox  # used for error messages Py3
+import tkMessageBox
+#
+from test import *
+
 
 # Game constants
 welcomeScreenTexts = ("UU-GAME",
@@ -25,17 +30,18 @@ welcomeScreenTexts = ("UU-GAME",
                             "The players take turns. Each turn consists of\n"
                             " 1. placing the offered piece (if any) on the board,\n"
                             " 2. selecting a piece for the opponent.\n\n"
-                            "Player 1 starts, by selecting a piece\n\n"
+                            "Player 1 starts, by selecting a piece from the list on the left.\n\n"
                             "Placing four pieces with the same property in a row wins.",
                       "Player 1",
                       "Player 2",
-                      "Start",
+                      "Start Game",
                       "Error",
                       "Player 1 name is missing.",
                       "Player 2 name is missing",
-                      "Enter player names or select computer opponent",
+                      "Enter player names or select computer opponent and level",
                       "Human",
                       "Computer")
+
 # Widget top/left positions (constants added are vertical sizes)
 leftMarginPos =                              10
 headerTopPos =                               10
@@ -49,11 +55,13 @@ winBGcolor = "light grey"
 
 # Create main window, called "root"
 root = tk.Tk()
-root.geometry("620x650")  # Don't allow resizing in the x or y direction
+# width x height
+root.geometry("620x650")
+root.resizable(0, 0)  # Don't allow resizing in the x or y direction
 root.title(welcomeScreenTexts[0])
 
 # Create an area to put widgets in, welcomeCanvas, in the top window
-welcomeCanvas = tk.Canvas(root, bg=winBGcolor)
+welcomeCanvas = tk.Canvas(root, bg=winBGcolor, width=800, height=700)
 welcomeCanvas.place(x=0, y=0, width=1031, height=1031)
 
 
@@ -75,10 +83,10 @@ promptText1 = tk.Label(welcomeCanvas, font=("Helvetica", 14), justify=tk.LEFT, t
 promptText1.place(x=leftMarginPos, y=playerPromptTopPos, height=40, width=600)
 
 # Prompt text for radio buttons
-promptText1 = tk.Label(welcomeCanvas, anchor=tk.CENTER, bg="snow", font=("Helvetica", 14), text=welcomeScreenTexts[3])
+promptText1 = tk.Label(welcomeCanvas, anchor=tk.CENTER, font=("Helvetica", 14), text=welcomeScreenTexts[3])
 promptText1.place(x=leftMarginPos, y=player1ButtonTopPos, height=60, width=150)
 
-promptText2 = tk.Label(welcomeCanvas, anchor=tk.CENTER, bg="snow", font=("Helvetica", 14), text=welcomeScreenTexts[4])
+promptText2 = tk.Label(welcomeCanvas, anchor=tk.CENTER, font=("Helvetica", 14), text=welcomeScreenTexts[4])
 promptText2.place(x=leftMarginPos, y=player2ButtonTopPos, height=60, width=150)
 
 # Selection of first player
@@ -90,8 +98,10 @@ def rb1callback():
     # Procedure executed when user selects user type for player 1
     if rb1value.get() == 1:
         player1nameWidget.config(state=tk.NORMAL)
+        player1AIlevelWidget.config(state=tk.DISABLED)
     else:
         player1nameWidget.config(state=tk.DISABLED)
+        player1AIlevelWidget.config(state=tk.NORMAL)
 
 
 # Radio buttons for selection of player 1 type
@@ -105,13 +115,20 @@ rButton2.place(x=(leftMarginPos + 160), y=(player1ButtonTopPos + 26))
 
 
 # Player 1 name variable
-player1name = tk.StringVar
+player1name = tk.StringVar()
 # player1name.set("Player 1 name")
 
 # Player 1 name entry field
 player1nameWidget = tk.Entry(welcomeCanvas, bg="snow", font=("Helvetica", 14), relief=tk.SUNKEN,
                              textvariable=player1name)
 player1nameWidget.place(x=(leftMarginPos + 280), y=player1ButtonTopPos)
+
+# Player 1 AI level
+ai1value = tk.StringVar()
+player1AIlevelWidget = tk.Spinbox(welcomeCanvas, font=("Helvetica", 14), textvariable=ai1value, values=("easy", "medium", "hard"))
+player1AIlevelWidget.place(x=(leftMarginPos + 280), y=(player1ButtonTopPos + 30))
+# Initially disabled
+player1AIlevelWidget.config(state=tk.DISABLED)
 
 # Selection of second player
 # Create variable to hold player 2 selection (1 or 2)
@@ -122,8 +139,10 @@ def rb2callback():
     # Procedure executed when user selects user type for player 2
     if rb2value.get() == 1:
         player2nameWidget.config(state=tk.NORMAL)
+        player2AIlevelWidget.config(state=tk.DISABLED)
     else:
         player2nameWidget.config(state=tk.DISABLED)
+        player2AIlevelWidget.config(state=tk.NORMAL)
 
 
 rButton3 = tk.Radiobutton(welcomeCanvas, text=welcomeScreenTexts[10], font=("Helvetica", 14), variable=rb2value,
@@ -135,37 +154,59 @@ rButton4 = tk.Radiobutton(welcomeCanvas, text=welcomeScreenTexts[11],
 rButton4.place(x=(leftMarginPos + 160), y=(player2ButtonTopPos + 26))
 
 # Player 2 name variable
-player2name = tk.StringVar
+player2name = tk.StringVar()
 # Player 2 name entry field
 player2nameWidget = tk.Entry(welcomeCanvas, bg="snow", font=("Helvetica", 14), relief=tk.SUNKEN,
                              textvariable=player2name)
 player2nameWidget.place(x=(leftMarginPos + 280), y=player2ButtonTopPos)
 
+# Player 2 AI level
+ai2value = tk.StringVar()
+player2AIlevelWidget = tk.Spinbox(welcomeCanvas, font=("Helvetica", 14), textvariable=ai2value, values=("easy", "medium", "hard"))
+player2AIlevelWidget.place(x=(leftMarginPos + 280), y=(player2ButtonTopPos + 30))
+# Initially disable
+player2AIlevelWidget.config(state=tk.DISABLED)
 
 def startgamecallback():
     # Procedure called when the start game button is pressed
+
+    global player1name
+    global player2name
+    global rb1value
+    global rb2value
+
     # Verify that player 1 is human & has a name or is computer
     if (rb1value.get() == 1) and (player1nameWidget.get() == ""):
         # Post error message "Player 1 name may not be empty"
-        tk.messagebox.showerror(welcomeScreenTexts[6], welcomeScreenTexts[7])
+        tkMessageBox.showerror(welcomeScreenTexts[6], welcomeScreenTexts[7])
+        # tk.messagebox.showerror(welcomeScreenTexts[6], welcomeScreenTexts[7])
         return
 
     if (rb2value.get() == 1) and (player2nameWidget.get() == ""):
         # Post error message "Player 2 name may not be empty"
-        tk.messagebox.showerror(welcomeScreenTexts[6], welcomeScreenTexts[8])
+        tkMessageBox.showerror(welcomeScreenTexts[6], welcomeScreenTexts[8])
+        # tk.messagebox.showerror(welcomeScreenTexts[6], welcomeScreenTexts[8])
         return
+
+    # Hide this window
+    root.withdraw()
 
     # Start the game here, from this callback
     # Choices are
     #  - rb1value.get() = 1 ==> human player 1
     #  - rb1value.get() = 2 ==> computer player 1
     #  - player1nameWidget.get() ==> human player 1 name
+    #  - player1AIlevelWidget.get() ==> AI player level (easy/medium/hard)
+    initGame(player1nameWidget.get(), player2nameWidget.get(), rb1value.get(), rb2value.get(), player1AIlevelWidget.get(), player2AIlevelWidget.get())
+
+    # At the end, terminate close this Window
+    root.destroy()
 
 
 # Start game button
 startGameButton = tk.Button(welcomeCanvas, command=startgamecallback, font=("Helvetica", 14),
                             text=welcomeScreenTexts[5])
-startGameButton.place(x=(leftMarginPos + 510), y=(player2ButtonTopPos + 60))
+startGameButton.place(x=(leftMarginPos + 450), y=(player2ButtonTopPos + 90))
 
 # Launch main event loop
 root.mainloop()

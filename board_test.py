@@ -1,20 +1,15 @@
 """
-This implements the UU-GAME game platform.
+This implements the UU-GAME Game Platform and Game Engine (AI).
 
 (c) 2019 SEPM Group G
 """
-import socketio
-import requests
-import tkinter as tk
+import Tkinter as tk
 import numpy as np
 import random
 import copy
 from PIL import Image, ImageTk
 from os import path
 #import mainpage * as main
-
-sio = socketio.Client()
-
 
 """
 Game class param @player1 name of first player @player2 name of second player, @AI the Ai that should be used
@@ -27,7 +22,7 @@ class Game:
         global canvasRP # Canvas w remaining pieces
         global imageLocationsRP
         global imagePaths
-        global sio
+        global indexRemainingPieces
         # Attributes of the Game class
         # Fills with None of type np.object
         self.board = np.full((4,4), None, dtype = np.object_)
@@ -39,10 +34,12 @@ class Game:
         # Next thing for the event handler
         self.event = 2
         # Names of players
-        self.player1 = None
-        self.player2 = None
+        self.player1 = player1
+        self.player2 = player2
+        self.exception = False
         # Inintiates the remaning pieces on the screen
-        self.indexRemainingPieces = [canvasRP.create_image(imageLocationsRP[c], image=imagePaths[c]['small']) for c in range(16)]
+        #self.indexRemainingPieces = [canvasRP.create_image(imageLocationsRP[c], image=imagePaths[c]['small']) for c in range(16)]
+        self.indexRemainingPieces = indexRemainingPieces
         self.nextPieceImg = None
         self.AI = AI
 
@@ -120,11 +117,17 @@ class Game:
         # - 3: quit
         if (self.event == 2):
             self.givePiece()
+            if (self.exception != True):
+                self.event = 1
+                self.GAME_TURN()
         elif (self.event == 1):
             if ((((1 + self.turncount % 2) != 1) and self.player2 == None) or ((1 + self.turncount % 2) == 1) and self.player1 == None):
                 self.AIturn()
             else:
                 self.layPiece()
+                if (self.exception != True):
+                    self.event = 2
+                    self.GAME_TURN()
         elif (self.event == 3): #Here you can call you function to go back to the main screen
             quit
 
@@ -166,6 +169,7 @@ class Game:
                 #InstructionLabel.config(text='Nonexisting piece, please choose a piece that is left between 1-16:')
                 terminalIO.clearInstructionEntry()
                 terminalIO.updateInstructionLabel("instructionError1")
+
     """
     Method for a human player to lay a piece on the board
     removes the piece from next piece and moves it into the box showing the game board on the designated spot from the player
@@ -201,11 +205,11 @@ class Game:
             self.GAME_TURN()
 
     """
-    help function for layPiece
-    adding the image on the game boardCopy
-    global canvasGB the box showing the game board
-    global imagePaths the img folder
-    global imageLocationsGB the cords to the boxes in canvasGB
+    Help function for layPiece
+    Adds the image on the game boardCopy
+    - global canvasGB the box showing the game board
+    - global imagePaths the img folder
+    - global imageLocationsGB the cords to the boxes in canvasGB
     param @id the id of the piece that should be placed in the board
     param @canvas the number of the box where the piece should be placed
     """
@@ -215,39 +219,7 @@ class Game:
         global imageLocationsGB
         canvasGB.create_image(imageLocationsGB[canvas], image=imagePaths[id-1]['regular'])
 
-    @sio.on('nextPiece')
-    def nextpiece_event(data):
-        global canvasNP
-        global imagePaths
-        self.nextPiece = data
-        self.nextPieceImg = canvasNP.create_image([100,100], image=imagePaths[self.nextPiece.id-1]['regular'])
-        self.remainingPieces.remove(self.nextPiece)
-        self.canvasRPhandler("delete", self.nextPiece.id-1)
-        self.event = 1
-        self.turncount +=1
-        self.GAME_TURN()
 
-    @sio.on('board')
-    def board_event(data):
-        global canvasNP
-        column = cont % 4
-        row = cont // 4
-        self.board[row,column] = self.nextPiece
-        if(Game.GAME_ENDED(self.board)==True):
-                print("ended") #here you can go back and break loop and such
-        self.pieceCanvas(self.nextPiece.id, cont)
-        canvasNP.delete(self.nextPieceImg)
-
-    @sio.on('start game')
-    def start_event():
-        self.event = 1
-        self.GAME_TURN()
-
-
-    @sio.on('init game')
-    def inti_event(data):
-        self.player1 = data.player1
-        self.player2 = data.player2
 
     """
     Calling the alpha beta AI for cords and a next piece
@@ -260,10 +232,11 @@ class Game:
         global imagePaths
         # Returns moveInfo object
         print(self.nextPiece)
+
         AImove = self.AI.makeBestMove(self.board, self.remainingPieces, self.nextPiece, self.turncount) #skickar jag in riktiga eller copierar jag bara?
         print(AImove.location, AImove.score, AImove.nextPiece)
         self.board[AImove.location] = self.nextPiece
-        sio.emit('board', AImove.location[0]*4 + AImove.location[1])
+        print(self.board)
         if(Game.GAME_ENDED(self.board)==True):
             print("ended") #Do fancy stuff if you wannt to quit
         self.pieceCanvas(self.nextPiece.id, AImove.location[0]*4 + AImove.location[1])
@@ -271,12 +244,12 @@ class Game:
         for x in range(0,len(self.remainingPieces)):
             if (self.remainingPieces[x].id == AImove.nextPiece.id):
                 self.nextPiece = self.remainingPieces[x]
-        self.nextPieceImg = canvasNP.create_image([100,100], image=imagePaths[self.nextPiece.id - 1]['regular'])
+        self.nextPieceImg = canvasNP.create_image([50,50], image=imagePaths[self.nextPiece.id - 1]['medium'])
         self.remainingPieces.remove(self.nextPiece)
         self.canvasRPhandler("delete", self.nextPiece.id-1)
         self.turncount += 1
-        sio.emit('nextPiece', self.nextPiece)
-
+        self.event = 1
+        self.GAME_TURN()
 
     """
     Updating user interface box with current players name and which instruction is given
@@ -387,7 +360,7 @@ class AI():
     """
     def randomLocation(self, board):
         pieces = [(board[i % 4, i // 4], (i % 4, i // 4), i) for i in range(0, 15)]  #creates array for the matrix
-        pieces = filter(lambda piece, coord, loc: piece is None, pieces)
+        pieces = filter(lambda (piece, coord, loc): piece is None, pieces)
         """
         dubbelceck this should return coords
         """
@@ -581,15 +554,12 @@ class moveInfo():
         self.locationInt = locationInt
         self.nextPiece = nextpiece
 
-
-
-
-
 """
 -------------------------------------------------------------------------------
 This section implements scalable squares and general init of the screen.
 If not called, the code will be dormant.
 """
+
 
 """
 This class implements the terminal IO display. It has three fields --
@@ -668,14 +638,13 @@ class IOarea:
         self.InstructionEntry.delete(first=0,last=10)
 
 
-
 """
 Draws squares on game board canvas
 Args:
-@canvasGB - the canvas to draw on
-@side - length of square side
-@gap - gap between the squares
-@line - width of edge line
+param @canvasGB - the canvas to draw on
+param @side - length of square side
+param @gap - gap between the squares
+param @line - width of edge line
 Returns:
 @Image locations list
 """
@@ -701,8 +670,10 @@ def drawGameBoardSquares(canvasGB, side, gap, line):
             image_y = y * side_step + round(side / 2) + gap
             imageLocationsGB.append( [image_x, image_y] )
             # Also place position number on squares
-            lbl = tk.Label(canvasGB, text=str( x + 1 + y * 4), font=("Helvetica", 24, "bold"), fg="dark grey")
-            lbl.place(x=image_x - 25, y=image_y - 25, width=50, height=50)  # center placement
+            canvasGB.create_text(image_x, image_y - 25, anchor="n",
+                font=("Helvetica", 36, "bold"), fill="dark grey", text=str( x + 1 + y * 4))
+            #lbl = tk.Label(canvasGB, text=str( x + 1 + y * 4), font=("Helvetica", 24, "bold"), fg="dark grey")
+            #lbl.place(x=image_x - 25, y=image_y - 25, width=50, height=50)  # center placement
             # lbl.place(x=(gap + x * side_step + 5), y=(gap + y * side_step) + 5)  # corner placement
 
     return imageLocationsGB
@@ -713,7 +684,7 @@ Creates and exports two canvases for game board and next piece.
 Draws board squares. The size of the squares can be configured here, by changing
 the three constants, side, gap, and line.
 Args:
-@root - window to draw on
+param @root - window to draw on
 Returns:
 imageLocationsGB - list with line-by-line corordinates of square centers
 height of game board
@@ -721,7 +692,7 @@ height of game board
 def initGameScreen(root):
 
     # Board square size
-    side = 150  # Length of square side
+    side = 180  # Length of square side
     gap = 5     # Gap between the squares
     line = 2    # Extra slack between the squares
 
@@ -734,12 +705,12 @@ def initGameScreen(root):
     global canvasNP
 
     # Next piece canvas
-    xStartNP = 2 * (side + gap + line)
-    canvasNP = tk.Canvas(root, bg="light grey")
-    canvasNP.place(x=xStartNP, y=(4 * (side + gap + line) + 10), width = (side + line), height = (side + line))
+    xStartNP = side + gap + line + 10
+    canvasNP = tk.Canvas(root, bg="light grey", relief=tk.RAISED)
+    canvasNP.place(x=xStartNP, y=(4 * (side + gap + line) + 40), width=round(1.15 * side / 2), height=round(1.15 *side / 2))
 
     # Game Boad canvas
-    xStartGB = 2 * (side + gap + line)
+    xStartGB = side + gap + line +10
     canvasGB = tk.Canvas(root, bg="white")
     canvasGB.place(x=xStartGB, y=0, width=(4 * (side + gap + line) + 5), height=(4 * (side + gap + line) + 5))
     imageLocationsGB = drawGameBoardSquares( canvasGB, side, gap, line );
@@ -750,22 +721,21 @@ def initGameScreen(root):
 Creates and exports the canvas for remaining pieces.
 The pieces and corresponding labels are drawn on the canvas.
 Args:
-@root - window to draw on
+param @root - window to draw on
 Return:
 @imagePaths - a list of paths to the piece image files
 """
 def initRPcanvas( root ):
     # Export global variables
     global canvasRP
-    global imagePaths
 
     # Canvas dimensions
     widthRP = 150
-    heightRP = 1031
+    heightRP = 890
 
     # Icon placement positions (a column)
     x_offset = 80  # x position of images
-    delta_y = 64  # y distance between images (start at 0)
+    delta_y = 50  # y distance between images (start at 0)
 
     # Remaining pieces canvas
     canvasRP = tk.Canvas(root, bg="light grey")
@@ -778,44 +748,34 @@ def initRPcanvas( root ):
 
     # Set up icon locations in file system
     imagePaths = [
-        tk.PhotoImage(file = path.dirname(__file__) + '/imgClr1/p' + str(i) + '.gif')
+        tk.PhotoImage(file = path.dirname(__file__) + '/imgClr3/p' + str(i) + '.gif')
         for i in range(1, 17)
     ]
 
-    """
-    # Set up dictionary with three sizes of respective image
+    # Set up dictionary with two sizes of respective image
     imagePaths = [
         {
             "regular": image,
-            "small": image.subsample(3)
+            "medium" : image.subsample(2),
+            "small": image.subsample(3),
+            "tiny" : image.subsample(4)
         }
         for image in imagePaths
     ]
-    """
-    imageDicts = []
-    for image in imagePaths:
-        imageDicts.append(
-        {
-            "regular": image,
-            "small": image.subsample(3)
-        })
 
-    print("Number of icons: " + str(len(imageDicts)))
-    for i in range(16):
-        print("Image in pos " + str(i))
-        print(imageDicts[i]['small'])
-
-
+    # List with remaining pieces
+    indexRemainingPieces = []
     # Draw icons in imageLocationsRP on canvas
     for c in range(16):
-        print("Creating small image " + str(c))
-        print(imageDicts[c]['small'])
-        canvasRP.create_image(imageLocationsRP[c], image=imageDicts[c]['small'])
+        indexRemainingPieces.append(canvasRP.create_image(imageLocationsRP[c], image=imagePaths[c]['tiny']))
         lbl = tk.Label(canvasRP, text=str(c + 1), font=("Helvetica", 14), anchor="center", bg="light grey", fg="dim grey")
         lbl.place(x=10, y=imageLocationsRP[c][1] - 25, width=30, height=50)
 
-    return imagePaths
+    return imagePaths, imageLocationsRP, indexRemainingPieces
 
+"""
+---------------------------------------------------------------------------------------------------
+"""
 
 """
 The game init values
@@ -823,6 +783,7 @@ mostly startup of different canvases and GUI boxes
 aswell as creating a Game and AI
  - root is the main window that holds all the panes (called canvases)
 """
+
 root = tk.Tk()
 root.title("UU Game")
 root.geometry("1000x800")
@@ -882,5 +843,5 @@ tictoc.canvasRPhandler("start",1)
 tictoc.GAME_TURN()
 
 root.pack_slaves()
-sio.connect('http://localhost:8080')
+
 root.mainloop()
