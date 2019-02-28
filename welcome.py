@@ -20,7 +20,7 @@ import Tkinter as tk # tkinter in Py3
 # from Tkinter import messagebox  # used for error messages Py3
 import tkMessageBox
 #
-from test import *
+from board_test import *
 
 
 # Game constants
@@ -40,7 +40,8 @@ welcomeScreenTexts = ("UU-GAME",
                       "Player 2 name is missing",
                       "Enter player names or select computer opponent and level",
                       "Human",
-                      "Computer")
+                      "Computer",
+                      "Quit")
 
 # Widget top/left positions (constants added are vertical sizes)
 leftMarginPos =                              10
@@ -167,6 +168,7 @@ player2AIlevelWidget.place(x=(leftMarginPos + 280), y=(player2ButtonTopPos + 30)
 # Initially disable
 player2AIlevelWidget.config(state=tk.DISABLED)
 
+
 def startgamecallback():
     # Procedure called when the start game button is pressed
 
@@ -203,10 +205,22 @@ def startgamecallback():
     root.destroy()
 
 
+"""
+Callback for the quit button. Quits app.
+"""
+def quitgamecallback():
+    raise SystemExit()
+
+
 # Start game button
 startGameButton = tk.Button(welcomeCanvas, command=startgamecallback, font=("Helvetica", 14),
                             text=welcomeScreenTexts[5])
 startGameButton.place(x=(leftMarginPos + 450), y=(player2ButtonTopPos + 90))
+
+# Quit game button
+quitGameButton = tk.Button(welcomeCanvas, command=quitgamecallback, font=("Helvetica", 14),
+                            text=welcomeScreenTexts[12])
+quitGameButton.place(x=(leftMarginPos + 10), y=(player2ButtonTopPos + 90))
 
 # Launch main event loop
 root.mainloop()
