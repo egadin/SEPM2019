@@ -5,8 +5,10 @@ another file.
 import tkinter as tk # tkinter in Py3
 from os import path
 from PIL import Image, ImageTk
+import socketio
+import asynci
 
-
+await socketio.AsyncClient().connect()
 """
 Draws squares on game board canvas
 Args:

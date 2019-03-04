@@ -18,11 +18,24 @@ player).
 """
 import tkinter as tk # tkinter in Py3
 from tkinter import messagebox  # used for error messages Py3
+import socketio
+import aiohttp
+import asyncio
+import time
 #import tkMessageBox
 #
-from board_test import *
+#from board import *
 
+gamelobby = None
 
+sio = socketio.Client()
+
+sio.connect('http://localhost:8080')
+print("tjo")
+sio.emit('gamelobby request')
+time.sleep(1)
+
+print(gamelobby)
 # Game constants
 welcomeScreenTexts = ("UU-GAME",
                       "Welcome to UU-GAME",
@@ -171,7 +184,7 @@ player2AIlevelWidget.config(state=tk.DISABLED)
 
 def startgamecallback():
     # Procedure called when the start game button is pressed
-
+    print("start")
     global player1name
     global player2name
     global rb1value
@@ -200,7 +213,9 @@ def startgamecallback():
     #  - player1nameWidget.get() ==> human player 1 name
     #  - player1AIlevelWidget.get() ==> AI player level (easy/medium/hard)
     initGame(player1nameWidget.get(), player2nameWidget.get(), rb1value.get(), rb2value.get(), player1AIlevelWidget.get(), player2AIlevelWidget.get())
-
+    """
+    What do you want to call on here?
+    """
     # At the end, terminate close this Window
     root.destroy()
 
@@ -225,6 +240,13 @@ quitGameButton.place(x=(leftMarginPos + 10), y=(player2ButtonTopPos + 90))
 # Launch main event loop
 root.mainloop()
 
-#sio.emit('join game', {'name':xxx})
-#sio.emit('create game')
-#sio.emit('create game', {'player1':xxx, 'player2':xxx})
+@sio.on('gamelobby reply')
+def connect(sid, data):
+    global gamelobby
+    gamelobby=data
+    
+print("tjo")
+sio.emit('gamelobby request')
+sio.emit('join gamelobby', {'name':xxx})
+sio.emit('start game')
+sio.emit('create gamelobby', {'player1':xxx, 'player2':xxx})
