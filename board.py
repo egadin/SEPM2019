@@ -743,31 +743,24 @@ def initRPcanvas( root ):
 
 @sio.on('init game')
 def init_event(data):
-    self.player1 = data.player1
-    self.player2 = data.player2
-    self.AI1 = data.AI1
-    self.AI2 = data.AI2
+    """
+    The game init values
+    mostly startup of different canvases and GUI boxes
+    aswell as creating a Game and AI
+     - root is the main window that holds all the panes (called canvases)
+    """
+    root = tk.Tk()
+    root.title("UU Game")
+    root.geometry("1000x800")
+    # GBheight is the height of the game squares canvas
+    imageLocationsGB, GBheight = initGameScreen(root)
+    imagePaths, imageLocationsRP, indexRemainingPieces = initRPcanvas(root)
+    terminalIO = IOarea(root, 335, GBheight + 10)
 
-"""
-The game init values
-mostly startup of different canvases and GUI boxes
-aswell as creating a Game and AI
- - root is the main window that holds all the panes (called canvases)
-"""
-root = tk.Tk()
-root.title("UU Game")
-root.geometry("1000x800")
-# GBheight is the height of the game squares canvas
-imageLocationsGB, GBheight = initGameScreen(root)
-imagePaths, imageLocationsRP, indexRemainingPieces = initRPcanvas(root)
-terminalIO = IOarea(root, 335, GBheight + 10)
+    tictoc = Game(data.player1, data.player2, data.AI1, data.AI2)
+    root.bind('<Return>', tictoc.EVENT_HANDLER)
+    tictoc.canvasRPhandler("start",1)
+    tictoc.GAME_TURN()
 
-
-tictocAI = AI("easy")
-tictoc = Game("1", None, tictocAI, tictocAI)
-root.bind('<Return>', tictoc.EVENT_HANDLER)
-tictoc.canvasRPhandler("start",1)
-tictoc.GAME_TURN()
-
-root.pack_slaves()
-root.mainloop()
+    root.pack_slaves()
+    root.mainloop()

@@ -7,11 +7,25 @@ This implements the welcome page for the UU-GAME game portal.
 """
 import tkinter as tk # tkinter in Py3
 from tkinter import messagebox  # used for error messages Py3
+from server import gamelobby
+import socketio
+import aiohttp
+import asyncio
+import time
 #import tkMessageBox
 #
+#from board import *
+
+
+sio = socketio.Client()
+sio.connect('http://localhost:8080')
+#print(sio.sid)
+sio.emit('gamelobby request')
+
+
 
 # Imported from server
-class gamelobby:
+"""class gamelobby:
     def __init__(self, player1id, player2id, player1, player2, winner, room):
         self.id = id
         self.player1id = player1id
@@ -33,15 +47,14 @@ class gamelobby:
         else:
             return self.player2
 
-    """
     Intended to provide more than the name, as a string
-    """
+    
     def getPlayer1info(self):
         return self.getPlayer1Name()
 
     def getPlayer2info(self):
         return self.getPlayer2Name()
-
+"""
 
 
 class waitingGamesListBox:
@@ -63,17 +76,11 @@ class waitingGamesListBox:
 
         waitingGamesLb.bind('<<ListboxSelect>>', self.listBoxCallback)
 
-    """
-    param @gamesList contains the following objects as elements:
-    class gamelobby:
-        self.id = id
-        self.player1id = player1id
-        self.player2id = player2id
-        self.player1 = player1
-        self.player2 = player2
-        self.winner = winner
-        self.room = room
-    """
+    @sio.on('gamelobby reply')
+    def connect(sid, data):
+        #parsning av datan måste läggas in här
+        self.gamesList=data
+
     def update(self,gamesList):
         for aGame in gamesList:
             self.listBox.insert(tk.END, aGame.player1)
@@ -213,6 +220,8 @@ class newGameDialog(complexDialog):
         self.win.withdraw()
 
     def newGameCallback(self):
+        global gamesList
+        global sio
         if (self.player1nameWidget.get() == ""):
             # Post error message "Player 2 name may not be empty"
             messagebox.showerror(self.portal.texts["error"], self.portal.texts["noName"])
@@ -220,7 +229,7 @@ class newGameDialog(complexDialog):
             return
 
         # Create new game for player 1
-        newGame = gamelobby(1, 2, self.player1nameWidget.get(), "AI", None, None)
+        newGame = gamelobby(len(gamesList),sio, None, self.player1nameWidget.get(), None, None, None, None, None)
         # List of waiting games
         self.portal.waitingGamesLB.addGame(newGame)
 
@@ -413,150 +422,6 @@ class portalScreen:
 
 portal = portalScreen()
 
-
-"""
----------------------------------------^^-------------------------------------
-"""
-"""
-# Prompt text for radio buttons
-promptText1 = tk.Label(welcomeCanvas, anchor=tk.CENTER, font=("Helvetica", 14), text=welcomeScreenTexts[3])
-promptText1.place(x=leftMarginPos, y=player1ButtonTopPos, height=60, width=150)
-
-promptText2 = tk.Label(welcomeCanvas, anchor=tk.CENTER, font=("Helvetica", 14), text=welcomeScreenTexts[4])
-promptText2.place(x=leftMarginPos, y=player2ButtonTopPos, height=60, width=150)
-
-# Selection of first player
-# Create variable to hold player 1 selection (1 or 2)
-rb1value = tk.IntVar()
-
-
-def rb1callback():
-    # Procedure executed when user selects user type for player 1
-    if rb1value.get() == 1:
-        player1nameWidget.config(state=tk.NORMAL)
-        player1AIlevelWidget.config(state=tk.DISABLED)
-    else:
-        player1nameWidget.config(state=tk.DISABLED)
-        player1AIlevelWidget.config(state=tk.NORMAL)
-
-
-# Radio buttons for selection of player 1 type
-rButton1 = tk.Radiobutton(welcomeCanvas, text=welcomeScreenTexts[10], font=("Helvetica", 14), variable=rb1value,
-                          bg=winBGcolor, value=1, command=rb1callback)
-rButton1.place(x=(leftMarginPos + 160), y=(player1ButtonTopPos - 3))
-rButton1.select()
-rButton2 = tk.Radiobutton(welcomeCanvas, text=welcomeScreenTexts[11], font=("Helvetica", 14), variable=rb1value,
-                          bg=winBGcolor, value=2, command=rb1callback)
-rButton2.place(x=(leftMarginPos + 160), y=(player1ButtonTopPos + 26))
-
-
-# Player 1 name variable
-player1name = tk.StringVar()
-# player1name.set("Player 1 name")
-
-# Player 1 name entry field
-player1nameWidget = tk.Entry(welcomeCanvas, bg="snow", font=("Helvetica", 14), relief=tk.SUNKEN,
-                             textvariable=player1name)
-player1nameWidget.place(x=(leftMarginPos + 280), y=player1ButtonTopPos)
-
-# Player 1 AI level
-ai1value = tk.StringVar()
-player1AIlevelWidget = tk.Spinbox(welcomeCanvas, font=("Helvetica", 14), textvariable=ai1value, values=("easy", "medium", "hard"))
-player1AIlevelWidget.place(x=(leftMarginPos + 280), y=(player1ButtonTopPos + 30))
-# Initially disabled
-player1AIlevelWidget.config(state=tk.DISABLED)
-
-# Selection of second player
-# Create variable to hold player 2 selection (1 or 2)
-rb2value = tk.IntVar()
-
-
-def rb2callback():
-    # Procedure executed when user selects user type for player 2
-    if rb2value.get() == 1:
-        player2nameWidget.config(state=tk.NORMAL)
-        player2AIlevelWidget.config(state=tk.DISABLED)
-    else:
-        player2nameWidget.config(state=tk.DISABLED)
-        player2AIlevelWidget.config(state=tk.NORMAL)
-
-
-rButton3 = tk.Radiobutton(welcomeCanvas, text=welcomeScreenTexts[10], font=("Helvetica", 14), variable=rb2value,
-                          bg=winBGcolor, value=1, command=rb2callback)
-rButton3.place(x=(leftMarginPos + 160), y=(player2ButtonTopPos - 3))
-rButton3.select()
-rButton4 = tk.Radiobutton(welcomeCanvas, text=welcomeScreenTexts[11],
-                          bg=winBGcolor, font=("Helvetica", 14), variable=rb2value, value=2, command=rb2callback)
-rButton4.place(x=(leftMarginPos + 160), y=(player2ButtonTopPos + 26))
-
-# Player 2 name variable
-player2name = tk.StringVar()
-# Player 2 name entry field
-player2nameWidget = tk.Entry(welcomeCanvas, bg="snow", font=("Helvetica", 14), relief=tk.SUNKEN,
-                             textvariable=player2name)
-player2nameWidget.place(x=(leftMarginPos + 280), y=player2ButtonTopPos)
-
-# Player 2 AI level
-ai2value = tk.StringVar()
-player2AIlevelWidget = tk.Spinbox(welcomeCanvas, font=("Helvetica", 14), textvariable=ai2value, values=("easy", "medium", "hard"))
-player2AIlevelWidget.place(x=(leftMarginPos + 280), y=(player2ButtonTopPos + 30))
-# Initially disable
-player2AIlevelWidget.config(state=tk.DISABLED)
-
-
-def startgamecallback():
-    # Procedure called when the start game button is pressed
-
-    global player1name
-    global player2name
-    global rb1value
-    global rb2value
-
-    # Verify that player 1 is human & has a name or is computer
-    if (rb1value.get() == 1) and (player1nameWidget.get() == ""):
-        # Post error message "Player 1 name may not be empty"
-        messagebox.showerror(welcomeScreenTexts[6], welcomeScreenTexts[7])
-        # tk.messagebox.showerror(welcomeScreenTexts[6], welcomeScreenTexts[7])
-        return
-
-    if (rb2value.get() == 1) and (player2nameWidget.get() == ""):
-        # Post error message "Player 2 name may not be empty"
-        messagebox.showerror(welcomeScreenTexts[6], welcomeScreenTexts[8])
-        # tk.messagebox.showerror(welcomeScreenTexts[6], welcomeScreenTexts[8])
-        return
-
-    # Hide this window
-    root.withdraw()
-
-    # Start the game here, from this callback
-    # Choices are
-    #  - rb1value.get() = 1 ==> human player 1
-    #  - rb1value.get() = 2 ==> computer player 1
-    #  - player1nameWidget.get() ==> human player 1 name
-    #  - player1AIlevelWidget.get() ==> AI player level (easy/medium/hard)
-    initGame(player1nameWidget.get(), player2nameWidget.get(), rb1value.get(), rb2value.get(), player1AIlevelWidget.get(), player2AIlevelWidget.get())
-
-    # At the end, terminate close this Window
-    root.destroy()
-
-
-
-# Callback for the quit button. Quits app.
-
-def quitgamecallback():
-    raise SystemExit()
-
-
-# Start game button
-startGameButton = tk.Button(welcomeCanvas, command=startgamecallback, font=("Helvetica", 14),
-                            text=welcomeScreenTexts[5])
-startGameButton.place(x=(leftMarginPos + 450), y=(player2ButtonTopPos + 90))
-
-# Quit game button
-quitGameButton = tk.Button(welcomeCanvas, command=quitgamecallback, font=("Helvetica", 14),
-                            text=welcomeScreenTexts[12])
-quitGameButton.place(x=(leftMarginPos + 10), y=(player2ButtonTopPos + 90))
-"""
 
 # Launch main event loop
 portal.win.mainloop()
