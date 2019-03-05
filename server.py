@@ -19,6 +19,25 @@ class gamelobby:
         self.winner = winner
         self.room = room
 
+    def getPlayer1Name(self):
+        if (self.player1 == None):
+            return "None"
+        else:
+            return self.player1
+
+    def getPlayer2Name(self):
+        if (self.player2 == None):
+            return "None"
+        else:
+            return self.player2
+
+    # Intended to provide more than the name, as a string
+    def getPlayer1info(self):
+        return self.getPlayer1Name()
+
+    def getPlayer2info(self):
+        return self.getPlayer2Name()
+
 class room:
     def __init__(self,p1, p2):
         self.player1id = p1
@@ -28,7 +47,7 @@ class room:
 @sio.on('connect')
 def connect(sid, environ):
     print("hej", sid)
-   
+
 
 @sio.on('disconnect')
 def disconnect(sid):
