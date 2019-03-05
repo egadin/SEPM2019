@@ -46,7 +46,7 @@ sio.connect('http://localhost:8080')
             return self.player2
 
     Intended to provide more than the name, as a string
-    
+
     def getPlayer1info(self):
         return self.getPlayer1Name()
 
@@ -93,13 +93,22 @@ class waitingGamesListBox:
         sioid = sid
         updatedLobbyList = []
         for lobby in data:
-            updatedLobbyList.append(gamelobby(data.id, data.player1id, data.player2id, data.player1, data.player2, data.AI1, data.AI2, data.winner, data.room))
+            updatedLobbyList.append(lobbylist.fromDictionary(lobby))
+            #updatedLobbyList.append(gamelobby(data.id, data.player1id, data.player2id, data.player1, data.player2, data.AI1, data.AI2, data.winner, data.room))
         self.gamesList = updatedLobbyList
         print(self.gamesList)
 
-    def update(self,gamesList):
+    """
+    Replaces all waiting games in listbox with those in gamesList
+    param @gamesList -- list of game lobbies (waiting games)
+    """
+    def update(self, gamesList):
+        # First, delete all elements
+        self.listBox.delete(0, END)
+        # Ten, insert new elements
         for aGame in gamesList:
             self.listBox.insert(tk.END, aGame.player1)
+        # Finally, store list
         self.gamesList = gamesList
 
     """
@@ -421,12 +430,12 @@ class portalScreen:
         waitingGamesLB.portal = self
 
         # Start game button
-        newGameButton = tk.Button(welcomeCanvas, command=self.newGameCallback, font=("Helvetica", 14),
+        newGameButton = tk.Button(welcomeCanvas, command=self.newGameDlgCallback, font=("Helvetica", 14),
                                     text=portalScreenTexts["newGame"])
         newGameButton.place(x=leftMarginPos, y=player1ButtonTopPos, width = 120)
 
         # Join waiting game button
-        joinGameButton = tk.Button(welcomeCanvas, command=self.joinGameCallback, font=("Helvetica", 14),
+        joinGameButton = tk.Button(welcomeCanvas, command=self.joinGameDlgCallback, font=("Helvetica", 14),
                                     text=portalScreenTexts["joinGame"])
         joinGameButton.place(x=leftMarginPos, y=player1ButtonTopPos + 50, width = 120)
         joinGameButton.config(state=tk.DISABLED)
@@ -443,12 +452,12 @@ class portalScreen:
 
 
     # New game button callback
-    def newGameCallback(portal):
+    def newGameDlgCallback(portal):
         dlg = newGameDialog(portal)
 
 
     # Joing existing game callback
-    def joinGameCallback(portal):
+    def joinGameDlgCallback(portal):
         dlg = joinGameDialog(portal)
 
     # Callback for the quit button. Quits app.
@@ -463,4 +472,3 @@ portal = portalScreen()
 sio.emit('gamelobby request')
 # Launch main event loop
 portal.win.mainloop()
-
