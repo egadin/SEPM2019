@@ -19,6 +19,32 @@ class gamelobby:
         self.winner = winner
         self.room = room
 
+    """
+    Translates a gamelobby object into a dictionary, that is returned.
+    """
+    def toDictionary(self):
+        return {
+            'id'        : self.id,
+            'player1id' : self.player1id,
+            'player2id' : self.player2id,
+            'player1'   : self.player1,
+            'player2'   : self.player2,
+            'AI1'       : self.AI1,
+            'AI2'       : self.AI2,
+            'winner'    : self.winner,
+            'room'      : self.room
+            }
+
+    """
+    Translates a dictinary data structure to a gamelobby object, that is returned.
+    Note that this is a static method, so it is called with its class and not instance.
+    """
+    @staticmethod
+    def fromDictionary(data):
+        return gamelobby(data['id'], data['player1id'], data['player2id'],
+                        data['player1'], data['player2'], data['AI1'], data['AI2'],
+                        data['winner'], data['room'])
+
     def getPlayer1Name(self):
         if (self.player1 == None):
             return "None"
