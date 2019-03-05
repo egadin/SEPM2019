@@ -59,11 +59,7 @@ async def board_event(sid, data):
 
 @sio.on('create gamelobby')
 async def creategame_event(sid, data):
-    if (data.player2!=None):
-        id2 = sid
-        p2name = data.player2
-        AI2 = data.AI
-    gamelist.append(gamelobby(sid,sid,id2,data.player1,p2name,None, AI2 ,None,None))
+    gamelist.append(gamelobby(data.id, data.player1id, data.player2id, data.player1, data.player2, data.AI1, data.AI2 , data.winner, data.room))
     sio.emit('create game', data=gamelist)
 
 

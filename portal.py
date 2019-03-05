@@ -15,7 +15,7 @@ import time
 #import tkMessageBox
 #
 #from board import *
-
+sioid = None
 
 sio = socketio.Client()
 sio.connect('http://localhost:8080')
@@ -91,8 +91,10 @@ class waitingGamesListBox:
 
     @sio.on('gamelobby reply')
     def connect(sid, data):
-        #parsning av datan måste läggas in här
-        self.gamesList=data
+        global sioid
+        sioid = sid
+        for lobby in data:
+            self.gamesList.append(gamelobby(data.id, data.player1id, data.player2id, data.player1, data.player2, data.AI1, data.AI2, data.winner, data.room))
 
     def update(self,gamesList):
         for aGame in gamesList:
@@ -245,7 +247,7 @@ class newGameDialog(complexDialog):
 
     def newGameCallback(self):
         global gamesList
-        global sio
+        global sioid
         if (self.player1nameWidget.get() == ""):
             # Post error message "Player 2 name may not be empty"
             messagebox.showerror(self.portal.texts["error"], self.portal.texts["noName"])
@@ -253,7 +255,8 @@ class newGameDialog(complexDialog):
             return
 
         # Create new game for player 1
-        newGame = gamelobby(len(gamesList),sio, None, self.player1nameWidget.get(), None, None, None, None, None)
+        newGame = gamelobby(len(gamesList),sioid, None, self.player1nameWidget.get(), None, None, None, None, None)
+        sio.emit('create game', {'id': newGame.id, 'player1id': newGame.player1id, 'player2id': newGame.player2id, 'player1': newGame.player1, 'player2': newGame.player2, 'AI1': newGame.AI1, 'AI2': newGame.AI2, 'winner': newGame.winner, 'room': newGame.room})
         # List of waiting games
         self.portal.waitingGamesLB.addGame(newGame)
 
@@ -458,6 +461,5 @@ portal = portalScreen()
 # Launch main event loop
 portal.win.mainloop()
 
-#sio.emit('join game', {'name':xxx})
-#sio.emit('create game')
-#sio.emit('create game', {'player1':xxx, 'player2':xxx})
+sio.emit('join game', {'name':xxx})
+sio.emit('create game')
