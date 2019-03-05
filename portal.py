@@ -17,7 +17,7 @@ import time
 #from board import *
 sioid = None
 sio = socketio.Client()
-sio.connect('http://localhost:8080')
+#sio.connect('http://localhost:8080')
 
 
 
@@ -451,12 +451,11 @@ class portalScreen:
         self.selectedWaitingGameNumber = None
 
 
-    # New game button callback
+    # Lunch dialog to create a new game
     def newGameDlgCallback(portal):
         dlg = newGameDialog(portal)
 
-
-    # Joing existing game callback
+    # Launch dialog to join existing game
     def joinGameDlgCallback(portal):
         dlg = joinGameDialog(portal)
 
@@ -467,6 +466,9 @@ class portalScreen:
 
 # Create main screen
 portal = portalScreen()
+
+# Connect to AsyncServer
+sio.connect('http://localhost:8080')
 
 #print(sio.sid)
 sio.emit('gamelobby request')

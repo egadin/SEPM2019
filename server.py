@@ -36,7 +36,7 @@ class gamelobby:
             }
 
     """
-    Translates a dictinary data structure to a gamelobby object, that is returned.
+    Translates a dictionary data structure to a gamelobby object, that is returned.
     Note that this is a static method, so it is called with its class and not instance.
     """
     @staticmethod
@@ -65,7 +65,7 @@ class gamelobby:
         return self.getPlayer2Name()
 
 class room:
-    def __init__(self,p1, p2):
+    def __init__(self, p1, p2):
         self.player1id = p1
         self.player2id = p2
 
@@ -73,7 +73,6 @@ class room:
 @sio.on('connect')
 def connect(sid, environ):
     print("hej", sid)
-
 
 @sio.on('disconnect')
 def disconnect(sid):
@@ -102,29 +101,31 @@ async def requestevent(sid):
 
 @sio.on('create gamelobby')
 async def creategame_event(sid, data):
-    gamelist.append(gamelobby(data.id, data.player1id, data.player2id, data.player1, data.player2, data.AI1, data.AI2 , data.winner, data.room))
+    gamelist.append(gamelobby.fromDictionary(data))
+    #gamelist.append(gamelobby(data.id, data.player1id, data.player2id, data.player1, data.player2, data.AI1, data.AI2 , data.winner, data.room))
     updatelobby()
 
 async def updatelobby():
     sendlist = []
     for lobby in gamelist:
-        sendlist.append({'id': lobby.id, 'player1id': lobby.player1id, 'player2id': lobby.player2id, 'player1': lobby.player1, 'player2': lobby.player2, 'AI1': lobby.AI1, 'AI2': lobby.AI2, 'winner': lobby.winner, 'room': lobby.room})
+        sendlist.append(lobby.toDictionary())
+        #sendlist.append({'id': lobby.id, 'player1id': lobby.player1id, 'player2id': lobby.player2id, 'player1': lobby.player1, 'player2': lobby.player2, 'AI1': lobby.AI1, 'AI2': lobby.AI2, 'winner': lobby.winner, 'room': lobby.room})
     await sio.emit('lobby update', data=sendlist)
 
 
 @sio.on('join gamelobby')
 async def joingame_event(sid, data):
     for game in gamelist:
-        if (game.id == data.gameid):
-            game.player2id = data.player2id
-            game.player2 = data.player2
+        if (game.id == data['gameid']):
+            game.player2id = data['player2id']
+            game.player2 = data['player2']
             updatelobby()
             break
-    
 
 
 @sio.on('start game')
 async def startgame_event(sid):
+    # Find the game in gamelist, where player1 or 2 have id = sid
     currentgame=filter(lambda game: game.player1id == sid or game.player2id == sid, gamelist)
     gamelist.remove(currentgame)
     currentgame.room=room(currentgame.player1id, currentgame.player2id)
