@@ -89,12 +89,15 @@ class waitingGamesListBox:
 
         waitingGamesLb.bind('<<ListboxSelect>>', self.listBoxCallback)
 
-    @sio.on('gamelobby reply')
+    @sio.on('lobby update')
     def connect(sid, data):
         global sioid
         sioid = sid
+        updatedLobbyList = []
         for lobby in data:
-            self.gamesList.append(gamelobby(data.id, data.player1id, data.player2id, data.player1, data.player2, data.AI1, data.AI2, data.winner, data.room))
+            updatedLobbyList.append(gamelobby(data.id, data.player1id, data.player2id, data.player1, data.player2, data.AI1, data.AI2, data.winner, data.room))
+        self.gamesList = updatedLobbyList
+        print(self.gamesList)
 
     def update(self,gamesList):
         for aGame in gamesList:
@@ -328,6 +331,7 @@ class joinGameDialog(complexDialog):
         self.win.withdraw()
 
     def newGameCallback(self):
+        global sioid
         if (self.player2nameWidget.get() == ""):
             # Post error message "Player 2 name may not be empty"
             messagebox.showerror(self.portal.texts["error"], self.portal.texts["noName"])
@@ -335,7 +339,7 @@ class joinGameDialog(complexDialog):
             return
 
         # Join selected game
-
+        sio.emit('join game', {'player2':self.player2nameWidget.get(), 'player2id': sioid, 'gameid': portal.waitingGamesLB.gamesList[portal.selectedWaitingGameNumber[0]].id})
         # Hide dialog
         self.win.withdraw()
 
@@ -461,5 +465,3 @@ portal = portalScreen()
 # Launch main event loop
 portal.win.mainloop()
 
-sio.emit('join game', {'name':xxx})
-sio.emit('create game')

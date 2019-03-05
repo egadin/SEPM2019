@@ -53,11 +53,6 @@ def connect(sid, environ):
 def disconnect(sid):
     print('disconnect ')
 
-@sio.on('gamelobby request')
-async def gamelobbyreply(sid):
-    print(gamelist)
-    await sio.emit('gamelobby reply', data=gamelist, room=sid)
-
 @sio.on('nextPiece')
 async def nextpiece_event(sid, data):
     room=filter(lambda room: room.player1id == sid or room.player2id == sid, roomlist)
@@ -75,20 +70,31 @@ async def board_event(sid, data):
 
 @sio.on('start tournament')
 
+@sio.on('gamelobby request')
+async def requestevent(sid):
+    updatelobby()
 
 @sio.on('create gamelobby')
 async def creategame_event(sid, data):
     gamelist.append(gamelobby(data.id, data.player1id, data.player2id, data.player1, data.player2, data.AI1, data.AI2 , data.winner, data.room))
-    sio.emit('create game', data=gamelist)
+    updatelobby()
+
+async def updatelobby():
+    sendlist = []
+    for lobby in gamelist:
+        sendlist.append({'id': lobby.id, 'player1id': lobby.player1id, 'player2id': lobby.player2id, 'player1': lobby.player1, 'player2': lobby.player2, 'AI1': lobby.AI1, 'AI2': lobby.AI2, 'winner': lobby.winner, 'room': lobby.room})
+    await sio.emit('lobby update', data=sendlist)
 
 
 @sio.on('join gamelobby')
 async def joingame_event(sid, data):
-    for game in range(len(gamelist)):
-        if (game.id == data):
-            game.player2id = sid
-            game.player2 = data.name
-    await sio.emit('join game', data=gamelist)
+    for game in gamelist:
+        if (game.id == data.gameid):
+            game.player2id = data.player2id
+            game.player2 = data.player2
+            updatelobby()
+            break
+    
 
 
 @sio.on('start game')
