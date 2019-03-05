@@ -16,11 +16,9 @@ import time
 #
 #from board import *
 sioid = None
-
 sio = socketio.Client()
 sio.connect('http://localhost:8080')
-#print(sio.sid)
-sio.emit('gamelobby request')
+
 
 
 
@@ -249,7 +247,6 @@ class newGameDialog(complexDialog):
         self.win.withdraw()
 
     def newGameCallback(self):
-        global gamesList
         global sioid
         if (self.player1nameWidget.get() == ""):
             # Post error message "Player 2 name may not be empty"
@@ -258,7 +255,7 @@ class newGameDialog(complexDialog):
             return
 
         # Create new game for player 1
-        newGame = gamelobby(len(gamesList),sioid, None, self.player1nameWidget.get(), None, None, None, None, None)
+        newGame = gamelobby(sioid,sioid, None, self.player1nameWidget.get(), None, None, None, None, None)
         sio.emit('create game', {'id': newGame.id, 'player1id': newGame.player1id, 'player2id': newGame.player2id, 'player1': newGame.player1, 'player2': newGame.player2, 'AI1': newGame.AI1, 'AI2': newGame.AI2, 'winner': newGame.winner, 'room': newGame.room})
         # List of waiting games
         self.portal.waitingGamesLB.addGame(newGame)
@@ -462,6 +459,8 @@ class portalScreen:
 # Create main screen
 portal = portalScreen()
 
+#print(sio.sid)
+sio.emit('gamelobby request')
 # Launch main event loop
 portal.win.mainloop()
 
