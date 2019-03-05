@@ -13,6 +13,7 @@ from PIL import Image, ImageTk
 from os import path
 #import mainpage * as main
 from welcome import sio
+from portal import sio
 
 
 
@@ -221,6 +222,7 @@ class Game:
         global canvasNP
         global imagePaths
         self.nextPiece = Piece(data.id, data.shape, data.color, data.line, data.number)
+        self.nextPiece = Piece(data['id'], data['shape'], data['color'], data['line'], data['number'])
         self.nextPieceImg = canvasNP.create_image([100,100], image=imagePaths[self.nextPiece.id-1]['regular'])
         self.remainingPieces.remove(self.nextPiece)
         self.canvasRPhandler("delete", self.nextPiece.id-1)
@@ -233,6 +235,8 @@ class Game:
         global canvasNP
         column = cont % 4
         row = cont // 4
+        column = data % 4
+        row = data // 4
         self.board[row,column] = self.nextPiece
         if(Game.GAME_ENDED(self.board)==True):
                 print("ended") #here you can go back and break loop and such
@@ -263,6 +267,7 @@ class Game:
         print(AImove.location, AImove.score, AImove.nextPiece)
         self.board[AImove.location] = self.nextPiece
         sio.emit('board', AImove.location[0]*4 + AImove.location[1])
+        sio.emit('board', {'data':AImove.location[0]*4 + AImove.location[1]})
         if(Game.GAME_ENDED(self.board)==True):
             print("ended") #Do fancy stuff if you wannt to quit
         self.pieceCanvas(self.nextPiece.id, AImove.location[0]*4 + AImove.location[1])
@@ -743,6 +748,7 @@ def initRPcanvas( root ):
 
 @sio.on('init game')
 def init_event(data):
+    print("init board")
     """
     The game init values
     mostly startup of different canvases and GUI boxes
@@ -758,6 +764,7 @@ def init_event(data):
     terminalIO = IOarea(root, 335, GBheight + 10)
 
     tictoc = Game(data.player1, data.player2, data.AI1, data.AI2)
+    tictoc = Game(data['player1'], data['player2'], data['AI1'], data['AI2'])
     root.bind('<Return>', tictoc.EVENT_HANDLER)
     tictoc.canvasRPhandler("start",1)
     tictoc.GAME_TURN()

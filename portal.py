@@ -12,14 +12,13 @@ import socketio
 import aiohttp
 import asyncio
 import time
+import board
 #import tkMessageBox
 #
 #from board import *
 sioid = None
 sio = socketio.Client()
 #sio.connect('http://localhost:8080')
-
-
 
 
 # Imported from server
@@ -33,25 +32,12 @@ sio = socketio.Client()
         self.winner = winner
         self.room = room
 
-    def getPlayer1Name(self):
-        if (self.player1 == None):
-            return "None"
-        else:
-            return self.player1
+    def getPlayer1Name(self)
+    def getPlayer2Name(self)
 
-    def getPlayer2Name(self):
-        if (self.player2 == None):
-            return "None"
-        else:
-            return self.player2
-
-    Intended to provide more than the name, as a string
-
-    def getPlayer1info(self):
-        return self.getPlayer1Name()
-
-    def getPlayer2info(self):
-        return self.getPlayer2Name()
+    Intended to provide more than the name, as a string:
+    def getPlayer1info(self)
+    def getPlayer2info(self)
 """
 
 """
@@ -88,15 +74,14 @@ class waitingGamesListBox:
         waitingGamesLb.bind('<<ListboxSelect>>', self.listBoxCallback)
 
     @sio.on('lobby update')
-    def connect(sid, data):
-        global sioid
-        sioid = sid
+    def lobbyupdate(data):
+        global gamesList
         updatedLobbyList = []
         for lobby in data:
-            updatedLobbyList.append(lobbylist.fromDictionary(lobby))
-            #updatedLobbyList.append(gamelobby(data.id, data.player1id, data.player2id, data.player1, data.player2, data.AI1, data.AI2, data.winner, data.room))
-        self.gamesList = updatedLobbyList
-        print(self.gamesList)
+            updatedLobbyList.append(gamelobby.fromDictionary(lobby))
+            #updatedLobbyList.append(gamelobby(lobby['id'], lobby['player1id'], lobby['player2id'], lobby['player1'], lobby['player2'], lobby['AI1'], lobby['AI2'], lobby['winner'], lobby['room']))
+        gamesList = updatedLobbyList
+        print(gamesList)
 
     """
     Replaces all waiting games in listbox with those in gamesList
@@ -165,7 +150,6 @@ class complexDialog:
         # Make it larger than needed
         canvas.place(x=0, y=0, width=1031, height=1031)
         self.win = root
-
 
 
 """
@@ -256,16 +240,15 @@ class newGameDialog(complexDialog):
         self.win.withdraw()
 
     def newGameCallback(self):
-        global sioid
+        print("neew game callback")
         if (self.player1nameWidget.get() == ""):
             # Post error message "Player 2 name may not be empty"
             messagebox.showerror(self.portal.texts["error"], self.portal.texts["noName"])
             # tk.messagebox.showerror(portalScreenTexts[6], portalScreenTexts[8])
             return
-
         # Create new game for player 1
         newGame = gamelobby(sioid,sioid, None, self.player1nameWidget.get(), None, None, None, None, None)
-        sio.emit('create game', {'id': newGame.id, 'player1id': newGame.player1id, 'player2id': newGame.player2id, 'player1': newGame.player1, 'player2': newGame.player2, 'AI1': newGame.AI1, 'AI2': newGame.AI2, 'winner': newGame.winner, 'room': newGame.room})
+        sio.emit('create gamelobby', {'id': newGame.id, 'player1id': newGame.player1id, 'player2id': newGame.player2id, 'player1': newGame.player1, 'player2': newGame.player2, 'AI1': newGame.AI1, 'AI2': newGame.AI2, 'winner': newGame.winner, 'room': newGame.room})
         # List of waiting games
         self.portal.waitingGamesLB.addGame(newGame)
 
@@ -273,7 +256,10 @@ class newGameDialog(complexDialog):
         self.win.withdraw()
 
 
-
+"""
+Subclass of complexDialog. Implements join game dialog
+param @portal the launching object, a portalScreen
+"""
 class joinGameDialog(complexDialog):
     def __init__(self, portal):
         super().__init__(self)
@@ -343,12 +329,19 @@ class joinGameDialog(complexDialog):
             messagebox.showerror(self.portal.texts["error"], self.portal.texts["noName"])
             # tk.messagebox.showerror(portalScreenTexts[6], portalScreenTexts[8])
             return
-
+        print(repr(portal.waitingGamesLB.gamesList[portal.selectedWaitingGameNumber[0]]))
         # Join selected game
-        sio.emit('join game', {'player2':self.player2nameWidget.get(), 'player2id': sioid, 'gameid': portal.waitingGamesLB.gamesList[portal.selectedWaitingGameNumber[0]].id})
+        sio.emit('join gamelobby', {'player2':self.player2nameWidget.get(), 'gameid': portal.waitingGamesLB.gamesList[portal.selectedWaitingGameNumber[0]].id})
+        sio.emit('start game')
         # Hide dialog
         self.win.withdraw()
 
+
+"""
+Class implements the main portal screen.
+It displays a list of gamelobbies (waiting games) and can launch dialogs
+to create a new game lobby or to join an existing one.
+"""
 class portalScreen:
     def __init__(self):
         # Game constants
@@ -471,6 +464,15 @@ portal = portalScreen()
 sio.connect('http://localhost:8080')
 
 #print(sio.sid)
-sio.emit('gamelobby request')
+#sio.emit('gamelobby request')
+#@sio.on('init game')
+#def initgame(sid, data):
+#
+#@sio.on('init game')
+#def initgame(sid, data):
+
+"""
+lägg till init och start game
+"""
 # Launch main event loop
 portal.win.mainloop()
