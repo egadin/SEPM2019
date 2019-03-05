@@ -56,14 +56,27 @@ sio.emit('gamelobby request')
         return self.getPlayer2Name()
 """
 
-
+"""
+Implements a list box -- a GUI element used to display gamelobbiesself.
+Used on the main portal page.
+Subscribes to the listboxselect event to see when a list value is selected.
+The method listBoxCallback processes this event.
+"""
 class waitingGamesListBox:
+    """
+    Inits a waitingGamesListBox.
+    param @portal is the launching object, a portalScreen. This holds the canvas
+                to draw on.
+    param @xPos are the (x,y) coordinates where to place the listbox.
+    param @yPos
+    """
     def __init__(self, portal, xPos, yPos):
         # Get canvas to draw on
         win = portal.canvas
         # Define scrollbar
         scrollbar = tk.Scrollbar(win, orient="vertical")
-        scrollbar.pack( side = tk.RIGHT, fill = "y" )
+        scrollbar.place( x=(xPos + 185), y=(yPos + 1), height=193 )
+        #scrollbar.pack( side = tk.RIGHT, fill = "y" )
         # Define listbox, add scrollbar update command
         waitingGamesLb = tk.Listbox(win, yscrollcommand = scrollbar.set, font=("Helvetica", 12))
         waitingGamesLb.place(x = xPos, y = yPos)
@@ -104,6 +117,10 @@ class waitingGamesListBox:
                 self.listBox.delete(i)
                 self.gamesList.pop(i)
 
+    """
+    Method triggered by selecting one of the elements in the list box.
+    param @clickEvent is an event object. Contains (x,y) coordinates of the click.
+    """
     def listBoxCallback(self, clickEvent):
         # Save selected game
         self.portal.selectedWaitingGameNumber = self.listBox.curselection()
@@ -112,6 +129,12 @@ class waitingGamesListBox:
 
 
 
+"""
+Root (abstract) class implementing the framne of a dialog,
+Turns out, dialogs are like any other windows. The modal aspect must be
+manually implemented (not done here.)
+Not sure why the init method gets both instances.
+"""
 class complexDialog:
     def __init__(self, subSelf):
         # Create dialog window, called "root"
@@ -134,7 +157,7 @@ class complexDialog:
 
 
 """
-Implements new game dialog
+Subclass of complexDialog. Implements new game dialog
 param @portal the launching object, a portalScreen
 """
 class newGameDialog(complexDialog):
@@ -217,6 +240,7 @@ class newGameDialog(complexDialog):
             self.player2AIlevelWidget.config(state=tk.NORMAL)
 
     def cancelDlgCallback(self):
+        # Cancel button's callback
         self.win.withdraw()
 
     def newGameCallback(self):
@@ -405,6 +429,11 @@ class portalScreen:
         # Store as attribute, so itcan be reached from callback method
         self.joinGameButton = joinGameButton
 
+        # Quit game button
+        quitGameButton = tk.Button(welcomeCanvas, command=self.quitGameCallback, font=("Helvetica", 14),
+                                    text=portalScreenTexts["quitLbl"])
+        quitGameButton.place(x=(leftMarginPos + 400), y=(player2ButtonTopPos + 80), width=120)
+
         # Init number of selected waiting game
         self.selectedWaitingGameNumber = None
 
@@ -418,10 +447,13 @@ class portalScreen:
     def joinGameCallback(portal):
         dlg = joinGameDialog(portal)
 
+    # Callback for the quit button. Quits app.
+    def quitGameCallback(portal):
+        raise SystemExit()
 
 
+# Create main screen
 portal = portalScreen()
-
 
 # Launch main event loop
 portal.win.mainloop()
