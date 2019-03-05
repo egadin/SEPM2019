@@ -7,11 +7,25 @@ This implements the welcome page for the UU-GAME game portal.
 """
 import tkinter as tk # tkinter in Py3
 from tkinter import messagebox  # used for error messages Py3
+from server import gamelobby
+import socketio
+import aiohttp
+import asyncio
+import time
 #import tkMessageBox
 #
+#from board import *
+
+
+sio = socketio.Client()
+sio.connect('http://localhost:8080')
+#print(sio.sid)
+sio.emit('gamelobby request')
+
+
 
 # Imported from server
-class gamelobby:
+"""class gamelobby:
     def __init__(self, player1id, player2id, player1, player2, winner, room):
         self.id = id
         self.player1id = player1id
@@ -33,15 +47,14 @@ class gamelobby:
         else:
             return self.player2
 
-    """
     Intended to provide more than the name, as a string
-    """
+    
     def getPlayer1info(self):
         return self.getPlayer1Name()
 
     def getPlayer2info(self):
         return self.getPlayer2Name()
-
+"""
 
 """
 Implements a list box -- a GUI element used to display gamelobbiesself.
@@ -76,17 +89,11 @@ class waitingGamesListBox:
 
         waitingGamesLb.bind('<<ListboxSelect>>', self.listBoxCallback)
 
-    """
-    param @gamesList contains the following objects as elements:
-    class gamelobby:
-        self.id = id
-        self.player1id = player1id
-        self.player2id = player2id
-        self.player1 = player1
-        self.player2 = player2
-        self.winner = winner
-        self.room = room
-    """
+    @sio.on('gamelobby reply')
+    def connect(sid, data):
+        #parsning av datan måste läggas in här
+        self.gamesList=data
+
     def update(self,gamesList):
         for aGame in gamesList:
             self.listBox.insert(tk.END, aGame.player1)
@@ -237,6 +244,8 @@ class newGameDialog(complexDialog):
         self.win.withdraw()
 
     def newGameCallback(self):
+        global gamesList
+        global sio
         if (self.player1nameWidget.get() == ""):
             # Post error message "Player 2 name may not be empty"
             messagebox.showerror(self.portal.texts["error"], self.portal.texts["noName"])
@@ -244,7 +253,7 @@ class newGameDialog(complexDialog):
             return
 
         # Create new game for player 1
-        newGame = gamelobby(1, 2, self.player1nameWidget.get(), "AI", None, None)
+        newGame = gamelobby(len(gamesList),sio, None, self.player1nameWidget.get(), None, None, None, None, None)
         # List of waiting games
         self.portal.waitingGamesLB.addGame(newGame)
 

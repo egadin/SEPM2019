@@ -3,7 +3,7 @@ This implements the UU-GAME game platform.
 
 (c) 2019 SEPM Group G
 """
-import socketio
+#import socketio
 import requests
 import tkinter as tk
 import numpy as np
@@ -12,8 +12,8 @@ import copy
 from PIL import Image, ImageTk
 from os import path
 #import mainpage * as main
+from welcome import sio
 
-sio = socketio.Client()
 
 
 """
@@ -23,7 +23,7 @@ global imageLocationsRP the coords to the images in canvasRP
 global imagePaths to the img folder
 """
 class Game:
-    def __init__(self, player1, player2, AI):
+    def __init__(self, player1, player2, AI1, AI2):
         global canvasRP # Canvas w remaining pieces
         global imageLocationsRP
         global imagePaths
@@ -44,7 +44,8 @@ class Game:
         # Inintiates the remaning pieces on the screen
         self.indexRemainingPieces = [canvasRP.create_image(imageLocationsRP[c], image=imagePaths[c]['small']) for c in range(16)]
         self.nextPieceImg = None
-        self.AI = AI
+        self.AI1 = AI1
+        self.AI2 = AI2
 
     """
     Method to see if a game state is final
@@ -243,12 +244,7 @@ class Game:
         self.event = 1
         self.GAME_TURN()
 
-
-    @sio.on('init game')
-    def inti_event(data):
-        self.player1 = data.player1
-        self.player2 = data.player2
-
+    
     """
     Calling the alpha beta AI for cords and a next piece
     execute a turn without taking inputs and using the info from the AI instead
@@ -260,7 +256,10 @@ class Game:
         global imagePaths
         # Returns moveInfo object
         print(self.nextPiece)
-        AImove = self.AI.makeBestMove(self.board, self.remainingPieces, self.nextPiece, self.turncount) #skickar jag in riktiga eller copierar jag bara?
+        if(1+self.turncount%2 == 1):
+            AImove = self.AI1.makeBestMove(self.board, self.remainingPieces, self.nextPiece, self.turncount) #skickar jag in riktiga eller copierar jag bara?
+        else:
+            AImove = self.AI2.makeBestMove(self.board, self.remainingPieces, self.nextPiece, self.turncount) #skickar jag in riktiga eller copierar jag bara?
         print(AImove.location, AImove.score, AImove.nextPiece)
         self.board[AImove.location] = self.nextPiece
         sio.emit('board', AImove.location[0]*4 + AImove.location[1])
@@ -742,71 +741,26 @@ def initRPcanvas( root ):
 
     return imagePaths, imageLocationsRP, indexRemainingPieces
 
+@sio.on('init game')
+def init_event(data):
+    """
+    The game init values
+    mostly startup of different canvases and GUI boxes
+    aswell as creating a Game and AI
+     - root is the main window that holds all the panes (called canvases)
+    """
+    root = tk.Tk()
+    root.title("UU Game")
+    root.geometry("1000x800")
+    # GBheight is the height of the game squares canvas
+    imageLocationsGB, GBheight = initGameScreen(root)
+    imagePaths, imageLocationsRP, indexRemainingPieces = initRPcanvas(root)
+    terminalIO = IOarea(root, 335, GBheight + 10)
 
-"""
-The game init values
-mostly startup of different canvases and GUI boxes
-aswell as creating a Game and AI
- - root is the main window that holds all the panes (called canvases)
-"""
-root = tk.Tk()
-root.title("UU Game")
-root.geometry("1000x800")
-# GBheight is the height of the game squares canvas
-imageLocationsGB, GBheight = initGameScreen(root)
-imagePaths, imageLocationsRP, indexRemainingPieces = initRPcanvas(root)
-terminalIO = IOarea(root, 335, GBheight + 10)
+    tictoc = Game(data.player1, data.player2, data.AI1, data.AI2)
+    root.bind('<Return>', tictoc.EVENT_HANDLER)
+    tictoc.canvasRPhandler("start",1)
+    tictoc.GAME_TURN()
 
-#canvasGB = tk.Canvas(root, bg="white", height=1031, width=1031)
-#canvasGB.place(x=301,y=0, width=1031, height=1031)
-#canvasRP = tk.Canvas(root, bg="light grey", height=1031, width=300)
-#canvasRP.place(x=0, y=0, width = 300, height = 1031)
-#imageLocationsRP = [[150,34],[150,98],[150,162],[150,226],[150,290],[150,354],[150,418],[150,482],[150,546],[150,610],[150,674],[150,738],[150,802],[150,866],[150,930],[150,994]]
-#canvasNP = tk.Canvas(root, bg="light grey", height=200, width=200)
-#canvasNP.place(x=100, y=1050, width = 200, height = 200)
-
-"""
-for x in range(4):
-    for y in range(4):
-        canvasGB.create_rectangle(
-            5 + x * 257,
-            5 + y * 257,
-            255 + x * 257,
-            255 + y * 257,
-            fill = 'light grey',
-            width = 5
-        )
-
-imageLocationsGB = [[130,130],[387,130],[644,130],[901,130],[130,387],[387,387],[644,387],[901,387],[130,644],[387,644],[644,644],[901,644],[130,901],[387,901],[644,901],[901,901]]
-imagePaths = [
-    tk.PhotoImage(file = path.dirname(__file__) + '/imgClr1/p' + str(i) + '.gif')
-    for i in range(1, 17)
-]
-imagePaths = [
-    {
-        "regular": image,
-        "small": image.subsample(3)
-    }
-    for image in imagePaths
-]
-contents = tk.IntVar()
-PlayerLabel = tk.Label(root, text="")
-PlayerLabel.place(x = 500, y = 1050)
-InstructionLabel = tk.Label(root, text="")
-InstructionLabel.place(x= 500, y=1085)
-"""
-tictocAI = AI("easy")
-tictoc = Game("1", None, tictocAI)
-root.bind('<Return>', tictoc.EVENT_HANDLER)
-
-#PlayerLabel.config(text='{}'.format(tictoc.player1)) if ((1 + tictoc.turncount % 2) == 1) else PlayerLabel.config(text='{}'.format(tictoc.player2))
-#InstructionLabel.config(text='Number of piece to give away 1-16:')
-#InstructionEntry = tk.Entry(root, bd = 5)
-#InstructionEntry["textvariable"] = contents
-#InstructionEntry.place(x=500, y=1120)
-tictoc.canvasRPhandler("start",1)
-tictoc.GAME_TURN()
-
-root.pack_slaves()
-sio.connect('http://localhost:8080')
-root.mainloop()
+    root.pack_slaves()
+    root.mainloop()
