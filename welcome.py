@@ -25,7 +25,7 @@ from board_test import *
 
 # Game constants
 welcomeScreenTexts = ("UU-GAME",
-                      "Welcome to UU-GAME",
+                      "UU-GAME Portal",
                       "This is a two-player board game where pieces are placed on a board.\n"
                             "The players take turns. Each turn consists of\n"
                             " 1. placing the offered piece (if any) on the board,\n"
@@ -34,14 +34,38 @@ welcomeScreenTexts = ("UU-GAME",
                             "Placing four pieces with the same property in a row wins.",
                       "Player 1",
                       "Player 2",
-                      "Start Game",
+                      "OK",
                       "Error",
                       "Player 1 name is missing.",
                       "Player 2 name is missing",
-                      "Enter player names or select computer opponent and level",
+                      "Enter name and select opponent",
                       "Human",
                       "Computer",
-                      "Quit")
+                      "Quit",
+                      "Cancel")
+portalScreenTexts =
+    {
+    "winName"   : "UU-GAME",
+    "head"      : "UU-GAME Portal",
+    "instr"     : "This is a two-player board game where pieces are placed on a board.\n"
+                      "The players take turns. Each turn consists of\n"
+                      " 1. placing the offered piece (if any) on the board,\n"
+                      " 2. selecting a piece for the opponent.\n\n"
+                      "Player 1 starts, by selecting a piece from the list on the left.\n\n"
+                      "Placing four pieces with the same property in a row wins.",
+    "actPrompt0": "Create or join a game",
+    "actPrompt1": "Enter name and select opponent",
+    "actPrompt2": "Enter name",
+    "pl1"       : "Player 1",
+    "pl2"       : "Player 2",
+    "humanPl"   : "Human",
+    "compPl"    : "Computer",
+    "noName"    : "Player name is missing"
+    "okLbl"     : "OK",
+    "cancelLbl" : "Cancel",
+    "quitLbl"   : "Quit",
+    "error"     : "Error",
+    }
 
 # Widget top/left positions (constants added are vertical sizes)
 leftMarginPos =                              10
@@ -59,7 +83,7 @@ root = tk.Tk()
 # width x height
 root.geometry("620x650")
 root.resizable(0, 0)  # Don't allow resizing in the x or y direction
-root.title(welcomeScreenTexts[0])
+root.title(portalScreenTexts[0])
 
 # Create an area to put widgets in, welcomeCanvas, in the top window
 welcomeCanvas = tk.Canvas(root, bg=winBGcolor, width=800, height=700)
@@ -70,24 +94,24 @@ welcomeCanvas.place(x=0, y=0, width=1031, height=1031)
 
 # Page header
 header = tk.Label(welcomeCanvas, anchor=tk.CENTER, font=("Helvetica", 30, "bold"), relief=tk.RAISED,
-                  bg="lightpink1", text=welcomeScreenTexts[1])
+                  bg="lightpink1", text=portalScreenTexts[1])
 header.place(x=leftMarginPos, y=headerTopPos, height=80, width=600)
 
 # Intro text
 intro = tk.Label(welcomeCanvas, anchor="nw", justify=tk.LEFT, bg="snow", padx=20, pady=20,
                  font=("Helvetica", 12),
-                 text=welcomeScreenTexts[2])
+                 text=portalScreenTexts[2])
 intro.place(x=leftMarginPos, y=introTopPos, height=185, width=600)
 
 # Prompt text for player selection screen section
-promptText1 = tk.Label(welcomeCanvas, font=("Helvetica", 14), justify=tk.LEFT, text=welcomeScreenTexts[9])
+promptText1 = tk.Label(welcomeCanvas, font=("Helvetica", 14), justify=tk.LEFT, text=portalScreenTexts[9])
 promptText1.place(x=leftMarginPos, y=playerPromptTopPos, height=40, width=600)
 
 # Prompt text for radio buttons
-promptText1 = tk.Label(welcomeCanvas, anchor=tk.CENTER, font=("Helvetica", 14), text=welcomeScreenTexts[3])
+promptText1 = tk.Label(welcomeCanvas, anchor=tk.CENTER, font=("Helvetica", 14), text=portalScreenTexts[3])
 promptText1.place(x=leftMarginPos, y=player1ButtonTopPos, height=60, width=150)
 
-promptText2 = tk.Label(welcomeCanvas, anchor=tk.CENTER, font=("Helvetica", 14), text=welcomeScreenTexts[4])
+promptText2 = tk.Label(welcomeCanvas, anchor=tk.CENTER, font=("Helvetica", 14), text=portalScreenTexts[4])
 promptText2.place(x=leftMarginPos, y=player2ButtonTopPos, height=60, width=150)
 
 # Selection of first player
@@ -106,11 +130,11 @@ def rb1callback():
 
 
 # Radio buttons for selection of player 1 type
-rButton1 = tk.Radiobutton(welcomeCanvas, text=welcomeScreenTexts[10], font=("Helvetica", 14), variable=rb1value,
+rButton1 = tk.Radiobutton(welcomeCanvas, text=portalScreenTexts[10], font=("Helvetica", 14), variable=rb1value,
                           bg=winBGcolor, value=1, command=rb1callback)
 rButton1.place(x=(leftMarginPos + 160), y=(player1ButtonTopPos - 3))
 rButton1.select()
-rButton2 = tk.Radiobutton(welcomeCanvas, text=welcomeScreenTexts[11], font=("Helvetica", 14), variable=rb1value,
+rButton2 = tk.Radiobutton(welcomeCanvas, text=portalScreenTexts[11], font=("Helvetica", 14), variable=rb1value,
                           bg=winBGcolor, value=2, command=rb1callback)
 rButton2.place(x=(leftMarginPos + 160), y=(player1ButtonTopPos + 26))
 
@@ -146,11 +170,11 @@ def rb2callback():
         player2AIlevelWidget.config(state=tk.NORMAL)
 
 
-rButton3 = tk.Radiobutton(welcomeCanvas, text=welcomeScreenTexts[10], font=("Helvetica", 14), variable=rb2value,
+rButton3 = tk.Radiobutton(welcomeCanvas, text=portalScreenTexts[10], font=("Helvetica", 14), variable=rb2value,
                           bg=winBGcolor, value=1, command=rb2callback)
 rButton3.place(x=(leftMarginPos + 160), y=(player2ButtonTopPos - 3))
 rButton3.select()
-rButton4 = tk.Radiobutton(welcomeCanvas, text=welcomeScreenTexts[11],
+rButton4 = tk.Radiobutton(welcomeCanvas, text=portalScreenTexts[11],
                           bg=winBGcolor, font=("Helvetica", 14), variable=rb2value, value=2, command=rb2callback)
 rButton4.place(x=(leftMarginPos + 160), y=(player2ButtonTopPos + 26))
 
@@ -180,14 +204,14 @@ def startgamecallback():
     # Verify that player 1 is human & has a name or is computer
     if (rb1value.get() == 1) and (player1nameWidget.get() == ""):
         # Post error message "Player 1 name may not be empty"
-        tkMessageBox.showerror(welcomeScreenTexts[6], welcomeScreenTexts[7])
-        # tk.messagebox.showerror(welcomeScreenTexts[6], welcomeScreenTexts[7])
+        tkMessageBox.showerror(portalScreenTexts[6], portalScreenTexts[7])
+        # tk.messagebox.showerror(portalScreenTexts[6], portalScreenTexts[7])
         return
 
     if (rb2value.get() == 1) and (player2nameWidget.get() == ""):
         # Post error message "Player 2 name may not be empty"
-        tkMessageBox.showerror(welcomeScreenTexts[6], welcomeScreenTexts[8])
-        # tk.messagebox.showerror(welcomeScreenTexts[6], welcomeScreenTexts[8])
+        tkMessageBox.showerror(portalScreenTexts[6], portalScreenTexts[8])
+        # tk.messagebox.showerror(portalScreenTexts[6], portalScreenTexts[8])
         return
 
     # Hide this window
@@ -214,12 +238,12 @@ def quitgamecallback():
 
 # Start game button
 startGameButton = tk.Button(welcomeCanvas, command=startgamecallback, font=("Helvetica", 14),
-                            text=welcomeScreenTexts[5])
+                            text=portalScreenTexts[5])
 startGameButton.place(x=(leftMarginPos + 450), y=(player2ButtonTopPos + 90))
 
 # Quit game button
 quitGameButton = tk.Button(welcomeCanvas, command=quitgamecallback, font=("Helvetica", 14),
-                            text=welcomeScreenTexts[12])
+                            text=portalScreenTexts[12])
 quitGameButton.place(x=(leftMarginPos + 10), y=(player2ButtonTopPos + 90))
 
 # Launch main event loop

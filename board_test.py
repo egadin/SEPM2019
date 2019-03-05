@@ -3,7 +3,7 @@ This implements the UU-GAME Game Platform and Game Engine (AI).
 
 (c) 2019 SEPM Group G
 """
-import Tkinter as tk
+import tkinter as tk
 import numpy as np
 import random
 import copy
@@ -360,7 +360,8 @@ class AI():
     """
     def randomLocation(self, board):
         pieces = [(board[i % 4, i // 4], (i % 4, i // 4), i) for i in range(0, 15)]  #creates array for the matrix
-        pieces = filter(lambda (piece, coord, loc): piece is None, pieces)
+        #pieces = filter(lambda (piece, coord, loc): piece is None, pieces)  # Py2
+        pieces = filter(lambda piece, coord, loc: piece is None, pieces)
         """
         dubbelceck this should return coords
         """
