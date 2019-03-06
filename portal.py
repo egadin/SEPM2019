@@ -16,7 +16,6 @@ import board
 #import tkMessageBox
 #
 #from board import *
-sioid = None
 sio = socketio.Client()
 #sio.connect('http://localhost:8080')
 
@@ -80,7 +79,7 @@ class waitingGamesListBox:
         for lobby in data:
             updatedLobbyList.append(gamelobby.fromDictionary(lobby))
         gamesList = updatedLobbyList
-        print(gamesList)
+        print(gamesList[0].id)
 
     """
     Replaces all waiting games in listbox with those in gamesList
@@ -246,7 +245,7 @@ class newGameDialog(complexDialog):
             # tk.messagebox.showerror(portalScreenTexts[6], portalScreenTexts[8])
             return
         # Create new game for player 1
-        newGame = gamelobby(sioid,sioid, None, self.player1nameWidget.get(), None, None, None, None)
+        newGame = gamelobby(None,None, None, self.player1nameWidget.get(), None, None, None, None)
         sio.emit('create gamelobby', {'id': newGame.id, 'player1id': newGame.player1id, 'player2id': newGame.player2id, 'player1': newGame.player1, 'player2': newGame.player2, 'AI1': newGame.AI1, 'AI2': newGame.AI2, 'winner': newGame.winner})
         # List of waiting games
         self.portal.waitingGamesLB.addGame(newGame)
@@ -322,15 +321,14 @@ class joinGameDialog(complexDialog):
         self.win.withdraw()
 
     def newGameCallback(self):
-        global sioid
+        global gamesList
         if (self.player2nameWidget.get() == ""):
             # Post error message "Player 2 name may not be empty"
             messagebox.showerror(self.portal.texts["error"], self.portal.texts["noName"])
             # tk.messagebox.showerror(portalScreenTexts[6], portalScreenTexts[8])
             return
-        print(repr(portal.waitingGamesLB.gamesList[portal.selectedWaitingGameNumber[0]]))
         # Join selected game
-        sio.emit('join gamelobby', {'player2':self.player2nameWidget.get(), 'gameid': portal.waitingGamesLB.gamesList[portal.selectedWaitingGameNumber[0]].id})
+        sio.emit('join gamelobby', {'player2':self.player2nameWidget.get(), 'gameid': gamesList[portal.selectedWaitingGameNumber[0]].id})
         sio.emit('start game')
         # Hide dialog
         self.win.withdraw()

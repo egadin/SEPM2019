@@ -111,6 +111,7 @@ async def updatelobby():
     sendlist = []
     for lobby in gamelist:
         sendlist.append(lobby.toDictionary())
+        print(repr(sendlist))
         #sendlist.append({'id': lobby.id, 'player1id': lobby.player1id, 'player2id': lobby.player2id, 'player1': lobby.player1, 'player2': lobby.player2, 'AI1': lobby.AI1, 'AI2': lobby.AI2, 'winner': lobby.winner, 'room': lobby.room})
     await sio.emit('lobby update', sendlist)
 
@@ -118,11 +119,12 @@ async def updatelobby():
 @sio.on('join gamelobby')
 async def joingame_event(sid, data):
     global gamelist
+    print(data['gameid'])
     for game in gamelist:
         if (game.id == data['gameid']):
-            game.player2id = data['player2id']
+            game.player2id = sid
             game.player2 = data['player2']
-            updatelobby()
+            await updatelobby()
             break
 
 
