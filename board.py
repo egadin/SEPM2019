@@ -12,7 +12,6 @@ import copy
 from PIL import Image, ImageTk
 from os import path
 #import mainpage * as main
-from welcome import sio
 from portal import sio
 
 

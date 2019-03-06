@@ -246,8 +246,8 @@ class newGameDialog(complexDialog):
             # tk.messagebox.showerror(portalScreenTexts[6], portalScreenTexts[8])
             return
         # Create new game for player 1
-        newGame = gamelobby(sioid,sioid, None, self.player1nameWidget.get(), None, None, None, None, None)
-        sio.emit('create gamelobby', {'id': newGame.id, 'player1id': newGame.player1id, 'player2id': newGame.player2id, 'player1': newGame.player1, 'player2': newGame.player2, 'AI1': newGame.AI1, 'AI2': newGame.AI2, 'winner': newGame.winner, })
+        newGame = gamelobby(sioid,sioid, None, self.player1nameWidget.get(), None, None, None, None)
+        sio.emit('create gamelobby', {'id': newGame.id, 'player1id': newGame.player1id, 'player2id': newGame.player2id, 'player1': newGame.player1, 'player2': newGame.player2, 'AI1': newGame.AI1, 'AI2': newGame.AI2, 'winner': newGame.winner})
         # List of waiting games
         self.portal.waitingGamesLB.addGame(newGame)
 

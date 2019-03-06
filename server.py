@@ -63,7 +63,7 @@ class gamelobby:
     def getPlayer2info(self):
         return self.getPlayer2Name()
 
-class room:
+class Room:
     def __init__(self, p1, p2):
         self.player1id = p1
         self.player2id = p2
@@ -107,6 +107,7 @@ async def creategame_event(sid, data):
     await updatelobby()
 
 async def updatelobby():
+    global gamelist
     sendlist = []
     for lobby in gamelist:
         sendlist.append(lobby.toDictionary())
@@ -116,6 +117,7 @@ async def updatelobby():
 
 @sio.on('join gamelobby')
 async def joingame_event(sid, data):
+    global gamelist
     for game in gamelist:
         if (game.id == data['gameid']):
             game.player2id = data['player2id']
@@ -127,13 +129,18 @@ async def joingame_event(sid, data):
 @sio.on('start game')
 async def startgame_event(sid):
     # Find the game in gamelist, where player1 or 2 have id = sid
-    currentgame=filter(lambda game: game.player1id == sid or game.player2id == sid, gamelist)
+    global gamelist
+    print("sid"+sid)
+    flist=filter(lambda game: game.player1id == sid or game.player2id == sid, gamelist)
+    currentgame=next(flist)
+    print("current game"+repr(currentgame))
+    print(repr(gamelist))
     gamelist.remove(currentgame)
-    room=room(currentgame.player1id, currentgame.player2id)
-    roomlist.append(room)
+    newroom=Room(currentgame.player1id, currentgame.player2id)
+    roomlist.append(newroom)
     sio.enter_room(currentgame.player1id, str(currentgame.player1id))
     sio.enter_room(currentgame.player2id, str(currentgame.player1id))
-    await sio.emit('init game', data=currentgame, room=str(currentgame.player1id))
+    await sio.emit('init game', data=currentgame.toDictionary(), room=str(currentgame.player1id))
     await sio.emit('start game', room=str(currentgame.player1id), skip_sid=currentgame.player2id)
 
 
