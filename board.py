@@ -12,6 +12,7 @@ import copy
 from PIL import Image, ImageTk
 from os import path
 #import mainpage * as main
+from welcome import sio
 from portal import sio
 
 
@@ -191,8 +192,8 @@ class Game:
             self.event = 3
         else:
             #InstructionEntry.delete(first=0,last=10)
-            terminalIO.clearInstructionEntry()
-            sio.emit('board', {'data':cont})
+            terminalIO.clearInstructionEntry();
+            sio.emit('board', cont)
             self.board[row,column] = self.nextPiece
             if(Game.GAME_ENDED(self.board)==True):
                 print("ended") #here you can go back and break loop and such
@@ -220,6 +221,7 @@ class Game:
     def nextpiece_event(data):
         global canvasNP
         global imagePaths
+        self.nextPiece = Piece(data.id, data.shape, data.color, data.line, data.number)
         self.nextPiece = Piece(data['id'], data['shape'], data['color'], data['line'], data['number'])
         self.nextPieceImg = canvasNP.create_image([100,100], image=imagePaths[self.nextPiece.id-1]['regular'])
         self.remainingPieces.remove(self.nextPiece)
@@ -231,6 +233,8 @@ class Game:
     @sio.on('board')
     def board_event(data):
         global canvasNP
+        column = cont % 4
+        row = cont // 4
         column = data % 4
         row = data // 4
         self.board[row,column] = self.nextPiece
@@ -262,6 +266,7 @@ class Game:
             AImove = self.AI2.makeBestMove(self.board, self.remainingPieces, self.nextPiece, self.turncount) #skickar jag in riktiga eller copierar jag bara?
         print(AImove.location, AImove.score, AImove.nextPiece)
         self.board[AImove.location] = self.nextPiece
+        sio.emit('board', AImove.location[0]*4 + AImove.location[1])
         sio.emit('board', {'data':AImove.location[0]*4 + AImove.location[1]})
         if(Game.GAME_ENDED(self.board)==True):
             print("ended") #Do fancy stuff if you wannt to quit
@@ -758,6 +763,7 @@ def init_event(data):
     imagePaths, imageLocationsRP, indexRemainingPieces = initRPcanvas(root)
     terminalIO = IOarea(root, 335, GBheight + 10)
 
+    tictoc = Game(data.player1, data.player2, data.AI1, data.AI2)
     tictoc = Game(data['player1'], data['player2'], data['AI1'], data['AI2'])
     root.bind('<Return>', tictoc.EVENT_HANDLER)
     tictoc.canvasRPhandler("start",1)

@@ -18,7 +18,7 @@ import board
 #from board import *
 sioid = None
 sio = socketio.Client()
-sio.connect('http://localhost:8080')
+#sio.connect('http://localhost:8080')
 
 
 # Imported from server
@@ -32,25 +32,12 @@ sio.connect('http://localhost:8080')
         self.winner = winner
         self.room = room
 
-    def getPlayer1Name(self):
-        if (self.player1 == None):
-            return "None"
-        else:
-            return self.player1
+    def getPlayer1Name(self)
+    def getPlayer2Name(self)
 
-    def getPlayer2Name(self):
-        if (self.player2 == None):
-            return "None"
-        else:
-            return self.player2
-
-    Intended to provide more than the name, as a string
-
-    def getPlayer1info(self):
-        return self.getPlayer1Name()
-
-    def getPlayer2info(self):
-        return self.getPlayer2Name()
+    Intended to provide more than the name, as a string:
+    def getPlayer1info(self)
+    def getPlayer2info(self)
 """
 
 """
@@ -91,7 +78,7 @@ class waitingGamesListBox:
         global gamesList
         updatedLobbyList = []
         for lobby in data:
-            updatedLobbyList.append(gamelobby(lobby['id'], lobby['player1id'], lobby['player2id'], lobby['player1'], lobby['player2'], lobby['AI1'], lobby['AI2'], lobby['winner']))
+            updatedLobbyList.append(gamelobby.fromDictionary(lobby))
         gamesList = updatedLobbyList
         print(gamesList)
 
@@ -162,7 +149,6 @@ class complexDialog:
         # Make it larger than needed
         canvas.place(x=0, y=0, width=1031, height=1031)
         self.win = root
-
 
 
 """
@@ -269,7 +255,10 @@ class newGameDialog(complexDialog):
         self.win.withdraw()
 
 
-
+"""
+Subclass of complexDialog. Implements join game dialog
+param @portal the launching object, a portalScreen
+"""
 class joinGameDialog(complexDialog):
     def __init__(self, portal):
         super().__init__(self)
@@ -346,6 +335,12 @@ class joinGameDialog(complexDialog):
         # Hide dialog
         self.win.withdraw()
 
+
+"""
+Class implements the main portal screen.
+It displays a list of gamelobbies (waiting games) and can launch dialogs
+to create a new game lobby or to join an existing one.
+"""
 class portalScreen:
     def __init__(self):
         # Game constants
@@ -448,12 +443,11 @@ class portalScreen:
         self.selectedWaitingGameNumber = None
 
 
-    # New game button callback
+    # Lunch dialog to create a new game
     def newGameDlgCallback(portal):
         dlg = newGameDialog(portal)
 
-
-    # Joing existing game callback
+    # Launch dialog to join existing game
     def joinGameDlgCallback(portal):
         dlg = joinGameDialog(portal)
 
@@ -464,6 +458,9 @@ class portalScreen:
 
 # Create main screen
 portal = portalScreen()
+
+# Connect to AsyncServer
+sio.connect('http://localhost:8080')
 
 #print(sio.sid)
 #sio.emit('gamelobby request')
