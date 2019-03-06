@@ -124,6 +124,19 @@ class waitingGamesListBox:
         # self.portal has a button that needs enabling
         self.portal.joinGameButton.config(state=tk.NORMAL)
 
+    """
+    Accessor returning boolean value depending on the selection or not
+    """
+    def isGameSelected(self):
+        if (self.listBox.curselection() == []):
+            return False
+        else:
+            return True
+
+    def getSelectedGame(self):
+        if (self.gamesList == []):
+            retun None
+        return self.gamesList[self.listBox.curselection()[0]]
 
 
 """
@@ -315,19 +328,23 @@ class joinGameDialog(complexDialog):
         cancelDlgButton.place(x=(self.leftMarginPos + 300), y=(self.player2ButtonTopPos + 100), width=100)
 
         # Start button
-        startGameButton = tk.Button(self.win, command=self.newGameCallback, font=("Helvetica", 14),
+        startGameButton = tk.Button(self.win, command=self.joinGameCallback, font=("Helvetica", 14),
                                     text=portalTexts["okLbl"])
         startGameButton.place(x=(self.leftMarginPos + 410), y=(self.player2ButtonTopPos + 100), width=100)
 
     def cancelDlgCallback(self):
         self.win.withdraw()
 
-    def newGameCallback(self):
+    """
+    Callback from joinGame dialog button.
+    Messages server to start selected game adding player 2.
+    param @self -- joinGameDialog
+    """
+    def joinGameCallback(self):
         global sioid
         if (self.player2nameWidget.get() == ""):
             # Post error message "Player 2 name may not be empty"
             messagebox.showerror(self.portal.texts["error"], self.portal.texts["noName"])
-            # tk.messagebox.showerror(portalScreenTexts[6], portalScreenTexts[8])
             return
         print(repr(portal.waitingGamesLB.gamesList[portal.selectedWaitingGameNumber[0]]))
         # Join selected game
@@ -455,6 +472,15 @@ class portalScreen:
     # Callback for the quit button. Quits app.
     def quitGameCallback(portal):
         raise SystemExit()
+
+    def getSelectedLobbyNumber(portal):
+        if hasattr(portal, 'selectedWaitingGameNumber'):
+            return portal.selectedWaitingGameNumber
+        else:
+            return None
+
+    def getSelextedLobby(portal):
+        if (portal.)
 
 
 # Create main screen

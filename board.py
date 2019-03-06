@@ -12,7 +12,6 @@ import copy
 from PIL import Image, ImageTk
 from os import path
 #import mainpage * as main
-from welcome import sio
 from portal import sio
 
 
@@ -248,7 +247,7 @@ class Game:
         self.event = 1
         self.GAME_TURN()
 
-    
+
     """
     Calling the alpha beta AI for cords and a next piece
     execute a turn without taking inputs and using the info from the AI instead

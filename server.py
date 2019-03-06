@@ -18,7 +18,7 @@ class gamelobby:
         self.AI2 = AI2
         self.winner = winner
         self.room = room
-
+#fixa bort rooms från transmissions
     """
     Translates a gamelobby object into a dictionary, that is returned.
     """
@@ -82,12 +82,12 @@ def disconnect(sid):
 async def nextpiece_event(sid, data):
     room=filter(lambda room: room.player1id == sid or room.player2id == sid, roomlist)
 
-    await sio.emit('nextPiece', data=data, room=str(room.player1id), skip_sid=sid)
+    await sio.emit('nextPiece', {'data':data}, room=str(room.player1id), skip_sid=sid)
 
 @sio.on('board')
 async def board_event(sid, data):
     room=filter(lambda room: room.player1id == sid or room.player2id == sid, roomlist)
-    await sio.emit('board', data=data, room=str(room.player1id), skip_sid=sid)
+    await sio.emit('board', {'data': data}, room=str(room.player1id), skip_sid=sid)
 
 @sio.on('create tournament')
 
@@ -97,27 +97,35 @@ async def board_event(sid, data):
 
 @sio.on('gamelobby request')
 async def requestevent(sid):
-    updatelobby()
+    await updatelobby()
 
 @sio.on('create gamelobby')
 async def creategame_event(sid, data):
+    print("create game server")
+    global gamelist
     gamelist.append(gamelobby.fromDictionary(data))
-    #gamelist.append(gamelobby(data.id, data.player1id, data.player2id, data.player1, data.player2, data.AI1, data.AI2 , data.winner, data.room))
-    updatelobby()
+    #gamelist.append(gamelobby(sid, sid, data['player2id'], data['player1'], data['player2'], data['AI1'], data['AI2'] , data['winner'], data['room']))
+    print(gamelist)
+    await updatelobby()
 
 async def updatelobby():
     sendlist = []
+    global gamelist
     for lobby in gamelist:
         sendlist.append(lobby.toDictionary())
         #sendlist.append({'id': lobby.id, 'player1id': lobby.player1id, 'player2id': lobby.player2id, 'player1': lobby.player1, 'player2': lobby.player2, 'AI1': lobby.AI1, 'AI2': lobby.AI2, 'winner': lobby.winner, 'room': lobby.room})
-    await sio.emit('lobby update', data=sendlist)
+    await sio.emit('lobby update', sendlist)
 
 
 @sio.on('join gamelobby')
 async def joingame_event(sid, data):
+    print("join lobby server")
+    global gamelist
     for game in gamelist:
+        print(game.id)
+        print(data['gameid'])
         if (game.id == data['gameid']):
-            game.player2id = data['player2id']
+            game.player2id = sid
             game.player2 = data['player2']
             updatelobby()
             break
@@ -132,9 +140,11 @@ async def startgame_event(sid):
     roomlist.append(currentgame.room)
     sio.enter_room(currentgame.player1id, str(currentgame.player1id))
     sio.enter_room(currentgame.player2id, str(currentgame.player1id))
-    await sio.emit('init game', data=currentgame, room=str(currentgame.player1id))
+    await sio.emit('init game', {'data':gamelobby.toDictionary(currentgame)}, room=str(currentgame.player1id))
     await sio.emit('start game', room=str(currentgame.player1id), skip_sid=currentgame.player2id)
-
+"""
+fix data outputs to dict
+"""
 
 if __name__ == '__main__':
     web.run_app(app)
