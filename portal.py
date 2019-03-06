@@ -16,7 +16,6 @@ import board
 #import tkMessageBox
 #
 #from board import *
-sioid = None
 sio = socketio.Client()
 #sio.connect('http://localhost:8080')
 
@@ -79,9 +78,8 @@ class waitingGamesListBox:
         updatedLobbyList = []
         for lobby in data:
             updatedLobbyList.append(gamelobby.fromDictionary(lobby))
-            #updatedLobbyList.append(gamelobby(lobby['id'], lobby['player1id'], lobby['player2id'], lobby['player1'], lobby['player2'], lobby['AI1'], lobby['AI2'], lobby['winner'], lobby['room']))
         gamesList = updatedLobbyList
-        print(gamesList)
+        print(gamesList[0].id)
 
     """
     Replaces all waiting games in listbox with those in gamesList
@@ -135,7 +133,7 @@ class waitingGamesListBox:
 
     def getSelectedGame(self):
         if (self.gamesList == []):
-            retun None
+            return None
         return self.gamesList[self.listBox.curselection()[0]]
 
 
@@ -260,8 +258,9 @@ class newGameDialog(complexDialog):
             # tk.messagebox.showerror(portalScreenTexts[6], portalScreenTexts[8])
             return
         # Create new game for player 1
-        newGame = gamelobby(sioid,sioid, None, self.player1nameWidget.get(), None, None, None, None, None)
-        sio.emit('create gamelobby', {'id': newGame.id, 'player1id': newGame.player1id, 'player2id': newGame.player2id, 'player1': newGame.player1, 'player2': newGame.player2, 'AI1': newGame.AI1, 'AI2': newGame.AI2, 'winner': newGame.winner, 'room': newGame.room})
+        newGame = gamelobby(None,None, None, self.player1nameWidget.get(), None, None, None, None)
+        sio.emit('create gamelobby', newGame.toDictionary())
+        #sio.emit('create gamelobby', {'id': newGame.id, 'player1id': newGame.player1id, 'player2id': newGame.player2id, 'player1': newGame.player1, 'player2': newGame.player2, 'AI1': newGame.AI1, 'AI2': newGame.AI2, 'winner': newGame.winner})
         # List of waiting games
         self.portal.waitingGamesLB.addGame(newGame)
 
@@ -341,14 +340,13 @@ class joinGameDialog(complexDialog):
     param @self -- joinGameDialog
     """
     def joinGameCallback(self):
-        global sioid
+        global gamesList
         if (self.player2nameWidget.get() == ""):
             # Post error message "Player 2 name may not be empty"
             messagebox.showerror(self.portal.texts["error"], self.portal.texts["noName"])
             return
-        print(repr(portal.waitingGamesLB.gamesList[portal.selectedWaitingGameNumber[0]]))
         # Join selected game
-        sio.emit('join gamelobby', {'player2':self.player2nameWidget.get(), 'gameid': portal.waitingGamesLB.gamesList[portal.selectedWaitingGameNumber[0]].id})
+        sio.emit('join gamelobby', {'player2':self.player2nameWidget.get(), 'gameid': gamesList[portal.selectedWaitingGameNumber[0]].id})
         sio.emit('start game')
         # Hide dialog
         self.win.withdraw()
@@ -373,7 +371,7 @@ class portalScreen:
                               "Placing four pieces with the same property in a row wins.",
             "actPrompt0": "Create a new game or select an existing one to join",
             "actPrompt1": "Enter name and select opponent",
-            "actPrompt2": "Enter name to join the game",
+            "actPrompt2": "Enter name to join the selected game",
             "name"      : "Name",
             "newGame"   : "New Game",
             "joinGame"  : "Join Game",
@@ -473,14 +471,23 @@ class portalScreen:
     def quitGameCallback(portal):
         raise SystemExit()
 
+    """
+    Accessor, return the selected game lobby (waiting game) number in the list box or None.
+    """
     def getSelectedLobbyNumber(portal):
         if hasattr(portal, 'selectedWaitingGameNumber'):
             return portal.selectedWaitingGameNumber
         else:
             return None
 
+    """
+    Accessor, returns the selected game lobby (waiting game) or None.
+    """
     def getSelextedLobby(portal):
-        if (portal.)
+        if (portal.selectedWaitingGameNumber == None):
+            return None
+        else:
+            return portal.waitingGamesLB.getSelectedGame(portal.getSelectedLobbyNumber())
 
 
 # Create main screen
