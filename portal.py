@@ -122,6 +122,19 @@ class waitingGamesListBox:
         # self.portal has a button that needs enabling
         self.portal.joinGameButton.config(state=tk.NORMAL)
 
+    """
+    Accessor returning boolean value depending on the selection or not
+    """
+    def isGameSelected(self):
+        if (self.listBox.curselection() == []):
+            return False
+        else:
+            return True
+
+    def getSelectedGame(self):
+        if (self.gamesList == []):
+            return None
+        return self.gamesList[self.listBox.curselection()[0]]
 
 
 """
@@ -246,7 +259,8 @@ class newGameDialog(complexDialog):
             return
         # Create new game for player 1
         newGame = gamelobby(None,None, None, self.player1nameWidget.get(), None, None, None, None)
-        sio.emit('create gamelobby', {'id': newGame.id, 'player1id': newGame.player1id, 'player2id': newGame.player2id, 'player1': newGame.player1, 'player2': newGame.player2, 'AI1': newGame.AI1, 'AI2': newGame.AI2, 'winner': newGame.winner})
+        sio.emit('create gamelobby', newGame.toDictionary())
+        #sio.emit('create gamelobby', {'id': newGame.id, 'player1id': newGame.player1id, 'player2id': newGame.player2id, 'player1': newGame.player1, 'player2': newGame.player2, 'AI1': newGame.AI1, 'AI2': newGame.AI2, 'winner': newGame.winner})
         # List of waiting games
         self.portal.waitingGamesLB.addGame(newGame)
 
@@ -313,19 +327,23 @@ class joinGameDialog(complexDialog):
         cancelDlgButton.place(x=(self.leftMarginPos + 300), y=(self.player2ButtonTopPos + 100), width=100)
 
         # Start button
-        startGameButton = tk.Button(self.win, command=self.newGameCallback, font=("Helvetica", 14),
+        startGameButton = tk.Button(self.win, command=self.joinGameCallback, font=("Helvetica", 14),
                                     text=portalTexts["okLbl"])
         startGameButton.place(x=(self.leftMarginPos + 410), y=(self.player2ButtonTopPos + 100), width=100)
 
     def cancelDlgCallback(self):
         self.win.withdraw()
 
-    def newGameCallback(self):
+    """
+    Callback from joinGame dialog button.
+    Messages server to start selected game adding player 2.
+    param @self -- joinGameDialog
+    """
+    def joinGameCallback(self):
         global gamesList
         if (self.player2nameWidget.get() == ""):
             # Post error message "Player 2 name may not be empty"
             messagebox.showerror(self.portal.texts["error"], self.portal.texts["noName"])
-            # tk.messagebox.showerror(portalScreenTexts[6], portalScreenTexts[8])
             return
         # Join selected game
         sio.emit('join gamelobby', {'player2':self.player2nameWidget.get(), 'gameid': gamesList[portal.selectedWaitingGameNumber[0]].id})
@@ -353,7 +371,7 @@ class portalScreen:
                               "Placing four pieces with the same property in a row wins.",
             "actPrompt0": "Create a new game or select an existing one to join",
             "actPrompt1": "Enter name and select opponent",
-            "actPrompt2": "Enter name to join the game",
+            "actPrompt2": "Enter name to join the selected game",
             "name"      : "Name",
             "newGame"   : "New Game",
             "joinGame"  : "Join Game",
@@ -452,6 +470,24 @@ class portalScreen:
     # Callback for the quit button. Quits app.
     def quitGameCallback(portal):
         raise SystemExit()
+
+    """
+    Accessor, return the selected game lobby (waiting game) number in the list box or None.
+    """
+    def getSelectedLobbyNumber(portal):
+        if hasattr(portal, 'selectedWaitingGameNumber'):
+            return portal.selectedWaitingGameNumber
+        else:
+            return None
+
+    """
+    Accessor, returns the selected game lobby (waiting game) or None.
+    """
+    def getSelextedLobby(portal):
+        if (portal.selectedWaitingGameNumber == None):
+            return None
+        else:
+            return portal.waitingGamesLB.getSelectedGame(portal.getSelectedLobbyNumber())
 
 
 # Create main screen
