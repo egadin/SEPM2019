@@ -63,6 +63,9 @@ class gamelobby:
     def getPlayer2info(self):
         return self.getPlayer2Name()
 
+"""
+This class represents a waiting game -- initially created with only player 1
+"""
 class Room:
     def __init__(self, p1, p2):
         self.player1id = p1
@@ -71,10 +74,12 @@ class Room:
 
 @sio.on('connect')
 def connect(sid, environ):
-    print("hej", sid)
+    # Borde spara en lista av alla klienter?
+    print("New client connection on socked ID ", sid)
 
 @sio.on('disconnect')
 def disconnect(sid):
+    # I så fall, ta bort klienten?
     print('disconnect ')
 
 @sio.on('nextPiece')

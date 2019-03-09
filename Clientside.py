@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 """
-This implements the welcome page for the UU-GAME game portal.
+This implements the GUI, the game platform, and the game engine for UU-GAME.
 
 (c) 2019 SEPM Group G
 """
@@ -37,7 +37,7 @@ class Menu:
         # Note here that Tkinter passes an event object to onselect()
         w = evt.widget
         self.selectedGame = w.curselection()[0]
-   
+
     def updateList():
         self.gList.delete(0,len(gameList)-1)
         if (len(gameList)>0):
@@ -45,7 +45,7 @@ class Menu:
         for lobby in self.gameList:
             self.gList.insert(END,lobby.player1)
 
-    def nbCallback(): 
+    def nbCallback():
         newForm = tk.Toplevel(menu)
         p1label = tk.Label(newForm, text="Player 1 name:")
         p1label.pack_configure(fill.X)
@@ -62,7 +62,7 @@ class Menu:
         nfcancel = tk.Button(newForm, text='cancel', command = lambda: cancelTopwindow(newForm))
         nfcancel.pack_configure()
 
-    def jbCallback(): 
+    def jbCallback():
         newForm = tk.Toplevel(menu)
         p2label = tk.Label(newForm, text="Player 1 name:")
         p2label.pack_configure(fill=X)
@@ -72,7 +72,7 @@ class Menu:
         jfsubmit.pack_configure()
         jfcancel = tk.Button(newForm, text='cancel', command = lambda: cancelTopwindow(newForm))
         jfcancel.pack_configure()
-    
+
     def creategame(data):
         global newForm
         sio.emit('create gamelobby', {'id': None, 'player1id': None, 'player2id': None, 'player1': data['p1name'], 'player2': None, 'AI1': None, 'AI2': data['AI'], 'winner': None})
@@ -81,10 +81,11 @@ class Menu:
     def joingame(data):
         global gameList
         sio.emit('join gamelobby', {'player2':data, 'gameid': gameList[self.selectedGame].id})
-        sio.emit('start gamelobby')
+        sio.emit('start gamelobby') # This does not have a corresponding receiver in the server
 
     def cancelTopwindow(data):
         data.destroy
+
 
     @sio.on('lobby update')
     def lobbyupdate(data):
@@ -94,6 +95,7 @@ class Menu:
             updatedLobbyList.append(gamelobby.fromDictionary(lobby))
         gameList = updatedLobbyList
         self.updateList()
+
 
     @sio.on('init game')
     def initgame(data):
@@ -303,12 +305,12 @@ class Gamestate:
             self.event = 1
             self.GAME_TURN()
 
-        
+
         """
-        Calling the alpha beta AI for cords and a next piece
+        Calling the alpha beta AI for coords and a next piece
         execute a turn without taking inputs and using the info from the AI instead
         global canvasNP box for the next piece
-        global imagePaths the img folder
+        global imagePaths point to the img folder
         """
         def AIturn(self):
             global canvasNP
@@ -363,7 +365,7 @@ class Gamestate:
 
                 terminalIO.updateInstructionLabel("instructionSelect2")
 
-    
+
             def canvasRPhandler(self, action, number):
                 global canvasRP
                 if (action == "delete"):
@@ -388,6 +390,7 @@ class Gamestate:
             rand = random.randint(1,11)
             boardCopy = copy.deepcopy(board)
 
+            # level determines the cutoff for when to do random and when to do optimal moves
             level = {
                 "easy" : 1,
                 "medium" : 3,
@@ -401,7 +404,7 @@ class Gamestate:
             else:
                 return self.alphabeta(boardCopy, remainingPieces, nextPiece, 0, float('-inf'), float('inf'), True, turncount)
 
-
+            """
             if (self.difficulty == "easy"):
                 if (rand > 1):
                     locInfo = self.randomLocation(board)
@@ -425,11 +428,11 @@ class Gamestate:
                     return moveInfo(0, locInfo[0], locInfo[1], npInfo)
                 else:
                     return self.alphabeta(boardCopy, remainingPieces, nextPiece, 0, float('-inf'), float('inf'), True, turncount)
-
+            """
         def randomLocation(self, board):
             pieces = [(board[i % 4, i // 4], (i % 4, i // 4), i) for i in range(0, 15)]  #creates array for the matrix
             pieces = filter(lambda piece, coord, loc: piece is None, pieces)
-           
+
             if(pieces!=[]):
                 piece = random.choice(pieces)
                 return (piece[1], piece[2])
@@ -565,7 +568,7 @@ class Gamestate:
             self.clearInstructionEntry()
 
         # Used to prompt the next player with the name
-        def updatePlayerLabel(self,txt):
+        def updatePlayerLabel(self, txt):
             self.PlayerLabel.config(text=txt)
 
         # Used to prompt the player with next action (select/place)
@@ -577,7 +580,7 @@ class Gamestate:
         def getInstruction(self):
             return int(self.contents.get())
 
-        # Clears the commend entered by the player
+        # Clears the command entered by the player
         def clearInstructionEntry(self):
             self.InstructionEntry.delete(first=0,last=10)
 
@@ -684,7 +687,9 @@ class Gamestate:
             lbl.place(x=10, y=imageLocationsRP[c][1] - 25, width=30, height=50)
 
         return imagePaths, imageLocationsRP, indexRemainingPieces
-    
+
+    # Is this a remnant of code that should not be here?
+    """
     # GBheight is the height of the game squares canvas
     imageLocationsGB, GBheight = initGameScreen(gametk)
     imagePaths, imageLocationsRP, indexRemainingPieces = initRPcanvas(gametk)
@@ -694,6 +699,6 @@ class Gamestate:
     gametk.bind('<Return>', tictoc.EVENT_HANDLER)
     tictoc.canvasRPhandler("start",1)
     tictoc.GAME_TURN()
-
+    """
 
 root.mainloop()
