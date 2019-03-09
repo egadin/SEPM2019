@@ -128,7 +128,7 @@ async def joingame_event(sid, data):
             break
 
 
-@sio.on('start game')
+@sio.on('start gamelobby')
 async def startgame_event(sid):
     # Find the game in gamelist, where player1 or 2 have id = sid
     global gamelist
