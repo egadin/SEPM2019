@@ -12,6 +12,8 @@ import socketio
 import aiohttp
 import asyncio
 import time
+import sys # used when terminating this Python script
+
 
 gameList = []
 sio = socketio.Client()
@@ -21,86 +23,102 @@ root = tk.Tk()
 
 class Menu:
     def __init__(self, sio):
-        menu = tk.Frame(root)
+        # There is one window, root, that has a frame, menu, drawn on it
+        self.root = root
+        self.menu = tk.Frame(root)
         self.selectedGame = None
         self.sio = sio
-        gList = tk.Listbox(menu, name='gList', height=20, width=40)
-        gList.bind('<<ListboxSelect>>', onselect)
-        gList.pack(fill=X)
-        newButton = tk.Button(text='New Game', command = nbCallback)
-        newButton.pack(fill=X)
-        joinButton = tk.Button(text='Join Game', state=DISABLED, command = jbCallback)
-        joinButton.pack(fill=X)
+        self.gList = tk.Listbox(self.menu, name='gList', height=20, width=40)
+        self.gList.bind('<<ListboxSelect>>', self.onselect)
+        self.gList.pack(fill=tk.X)
+        self.newButton = tk.Button(self.menu, text='New Game', command = self.nbCallback)
+        self.newButton.pack(fill=tk.X)
+        self.joinButton = tk.Button(self.menu, text='Join Game', state=tk.DISABLED, command = self.jbCallback)
+        self.joinButton.pack(fill=tk.X)
+        self.quitButton = tk.Button(self.menu, text = 'Quit', command = self.quitCallback)
+        self.quitButton.pack(fill = tk.X)
         self.aiOptions = ['Easy','Medium','Hard']
+        self.menu.pack(fill=tk.Y)
 
-    def onselect(evt):
+    def onselect(self,evt):
         # Note here that Tkinter passes an event object to onselect()
         w = evt.widget
         self.selectedGame = w.curselection()[0]
 
-    def updateList():
+    def updateList(self):
+        global gameList
+        print("update list",gameList)
         self.gList.delete(0,len(gameList)-1)
         if (len(gameList)>0):
-            self.joinButton.state=NORMAL
-        for lobby in self.gameList:
-            self.gList.insert(END,lobby.player1)
+            self.joinButton['state']=tk.NORMAL
+        for lobby in gameList:
+            self.gList.insert(tk.END,lobby.player1)
 
-    def nbCallback():
-        newForm = tk.Toplevel(menu)
-        p1label = tk.Label(newForm, text="Player 1 name:")
-        p1label.pack_configure(fill.X)
-        p1name = tk.Entry(newForm)
-        p1name.pack_configure(fill=X)
-        var = StringVar(newForm)
+    def nbCallback(self):
+        self.newForm = tk.Toplevel(self.menu)
+        p1label = tk.Label(self.newForm, text="Player 1 name:")
+        p1label.pack_configure(fill=tk.X)
+        p1name = tk.Entry(self.newForm)
+        p1name.pack_configure(fill=tk.X)
+        var = tk.StringVar(self.newForm)
         var.set(None)
-        p2label = tk.Label(newForm, text="Player 2:")
-        p2label.pack_configure(fill=X)
-        p2select = tk.OptionMenu(newForm, var, tuple(self.aiOptions))
-        p2select.pack_configure(fill=X)
-        nfsubmit = tk.Button(newForm, text='create game', command = lambda: creategame({'p1name': p1name, 'AI': var}))
+        p2label = tk.Label(self.newForm, text="Player 2:")
+        p2label.pack_configure(fill=tk.X)
+        p2select = tk.OptionMenu(self.newForm, var, tuple(self.aiOptions[0]),tuple(self.aiOptions[1]),tuple(self.aiOptions[2]))
+        p2select.pack_configure(fill=tk.X)
+        nfsubmit = tk.Button(self.newForm, text='create game', command = lambda: self.creategame({'p1name': p1name.get(), 'AI': str(var)}))
         nfsubmit.pack_configure()
-        nfcancel = tk.Button(newForm, text='cancel', command = lambda: cancelTopwindow(newForm))
+        nfcancel = tk.Button(self.newForm, text='cancel', command = lambda: self.cancelTopwindow(newForm))
         nfcancel.pack_configure()
 
-    def jbCallback():
-        newForm = tk.Toplevel(menu)
-        p2label = tk.Label(newForm, text="Player 1 name:")
-        p2label.pack_configure(fill=X)
-        p2name = tk.Entry(newForm)
-        p2name.pack_configure(fill=X)
-        jfsubmit = tk.Button(newForm, text='join game', command = lambda: joingame(p2name))
+    def jbCallback(self):
+        self.newForm = tk.Toplevel(self.menu)
+        p2label = tk.Label(self.newForm, text="Player 1 name:")
+        p2label.pack_configure(fill=tk.X)
+        p2name = tk.Entry(self.newForm)
+        p2name.pack_configure(fill=tk.X)
+        jfsubmit = tk.Button(self.newForm, text='join game', command = lambda: self.joingame(p2name.get()))
         jfsubmit.pack_configure()
-        jfcancel = tk.Button(newForm, text='cancel', command = lambda: cancelTopwindow(newForm))
+        jfcancel = tk.Button(self.newForm, text='cancel', command = lambda: self.cancelTopwindow(newForm))
         jfcancel.pack_configure()
 
-    def creategame(data):
-        global newForm
-        sio.emit('create gamelobby', {'id': None, 'player1id': None, 'player2id': None, 'player1': data['p1name'], 'player2': None, 'AI1': None, 'AI2': data['AI'], 'winner': None})
-        newForm.destroy
+    # Quits client; disconnect from server, demolish window, and quit
+    def quitCallback(self):
+        sio.disconnect()
+        self.root.destroy()
+        sys.exit()
 
-    def joingame(data):
+    def creategame(self,data):
+        sio.emit('create gamelobby', {'id': None, 'player1id': None, 'player2id': None, 'player1': data['p1name'], 'player2': None, 'AI1': None, 'AI2': data['AI'], 'winner': None})
+        self.newForm.destroy()
+
+    def joingame(self, data):
         global gameList
         sio.emit('join gamelobby', {'player2':data, 'gameid': gameList[self.selectedGame].id})
         sio.emit('start gamelobby') # This does not have a corresponding receiver in the server
 
-    def cancelTopwindow(data):
-        data.destroy
+    def cancelTopwindow(self,data):
+        data.destroy()
 
 
     @sio.on('lobby update')
     def lobbyupdate(data):
+        print("lobby update", data)
         global gameList
+        global menu
         updatedLobbyList = []
         for lobby in data:
             updatedLobbyList.append(gamelobby.fromDictionary(lobby))
         gameList = updatedLobbyList
-        self.updateList()
+        menu.updateList()
 
 
     @sio.on('init game')
     def initgame(data):
-        self.menu.destroy
-        Gamestate(self.sio, gamelobby.fromDictionary(data))
+        global menu
+        global sio
+        menu.menu.destroy()
+        Gamestate(sio, gamelobby.fromDictionary(data))
 
 
 
@@ -108,7 +126,15 @@ class Gamestate:
     def __init__(self, sio, lobby):
         self.sio = sio
         self.lobby = lobby
-        gametk = Frame(root)
+        self.gametk = tk.Frame(root)
+        imageLocationsGB, GBheight = Gamestate.initGameScreen(self.gametk)
+        imagePaths, imageLocationsRP, indexRemainingPieces = Gamestate.initRPcanvas(self.gametk)
+        terminalIO = IOarea(root, 335, GBheight + 10)
+        tictoc = Game(self.lobby.player1, lobby.player2, lobby.AI1, lobby.AI2)
+        elf.ametk.bind('<Return>', tictoc.EVENT_HANDLER)
+        tictoc.canvasRPhandler("start",1)
+        tictoc.GAME_TURN()
+
     class Game:
         def __init__(self, player1, player2, AI1, AI2):
             global canvasRP # Canvas w remaining pieces
@@ -620,7 +646,7 @@ class Gamestate:
         line = 2    # Extra slack between the squares
 
         # Resize window
-        root.geometry(str(7 * (side + gap + line)) + "x" + str(6 * (side + gap + line)))
+        #root.geometry(str(7 * (side + gap + line)) + "x" + str(6 * (side + gap + line)))
 
         # The two canvases that are created on the root window are
         # exported from this function
@@ -636,7 +662,7 @@ class Gamestate:
         xStartGB = side + gap + line +10
         canvasGB = tk.Canvas(root, bg="white")
         canvasGB.place(x=xStartGB, y=0, width=(4 * (side + gap + line) + 5), height=(4 * (side + gap + line) + 5))
-        imageLocationsGB = drawGameBoardSquares( canvasGB, side, gap, line );
+        imageLocationsGB = Gamestate.drawGameBoardSquares( canvasGB, side, gap, line )
 
         return imageLocationsGB, 4 * (side + gap + line)
 
@@ -663,7 +689,7 @@ class Gamestate:
 
         # Set up icon locations in file system
         imagePaths = [
-            tk.PhotoImage(file = path.dirname(__file__) + '/imgClr3/p' + str(i) + '.gif')
+            tk.PhotoImage(file = path.dirname(__file__) + '/img/p' + str(i) + '.gif')
             for i in range(1, 17)
         ]
 
@@ -688,17 +714,7 @@ class Gamestate:
 
         return imagePaths, imageLocationsRP, indexRemainingPieces
 
-    # Is this a remnant of code that should not be here?
-    """
-    # GBheight is the height of the game squares canvas
-    imageLocationsGB, GBheight = initGameScreen(gametk)
-    imagePaths, imageLocationsRP, indexRemainingPieces = initRPcanvas(gametk)
-    terminalIO = IOarea(root, 335, GBheight + 10)
 
-    tictoc = Game(self.lobby.player1, lobby.player2, lobby.AI1, lobby.AI2)
-    gametk.bind('<Return>', tictoc.EVENT_HANDLER)
-    tictoc.canvasRPhandler("start",1)
-    tictoc.GAME_TURN()
-    """
+menu = Menu(sio)
 
 root.mainloop()
