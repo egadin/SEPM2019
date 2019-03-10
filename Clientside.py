@@ -122,17 +122,22 @@ class Gamestate:
         self.imageLocationsGB, self.GBheight = Gamestate.initGameScreen(self.gametk)
         self.imagePaths, self.imageLocationsRP, self.indexRemainingPieces = Gamestate.initRPcanvas(self.gametk)
         self.terminalIO = Gamestate.IOarea(root, 335, self.GBheight + 10)
-        tictoc = Gamestate.Game(self.lobby.player1, self.lobby.player2, self.lobby.AI1, self.lobby.AI2)
+        tictoc = Gamestate.Game(self.lobby.player1, self.lobby.player2, self.lobby.AI1, self.lobby.AI2, self.sio, self.imageLocationsGB,
+        self.GBheight, self.imagePaths, self.imageLocationsRP, self.indexRemainingPieces, self.terminalIO)
         self.gametk.bind('<Return>', tictoc.EVENT_HANDLER)
         tictoc.canvasRPhandler("start",1)
         tictoc.GAME_TURN() 
 
     class Game:
-        def __init__(self, player1, player2, AI1, AI2):
+        def __init__(self, player1, player2, AI1, AI2, sio, imageLocationsGB, GBheight, imagePaths, imageLocationsRP, indexRemainingPieces, terminalIO):
             global canvasRP # Canvas w remaining pieces
-            global imageLocationsRP
-            global imagePaths
-            global sio
+            self.imageLocationsRP = imageLocationsRP
+            self.imagePaths = imagePaths 
+            self.sio = sio
+            self.imageLocationsGB = imageLocationsGB
+            self.GBheight = GBheight
+            self.indexRemainingPieces = indexRemainingPieces
+            self.terminalIO = terminalIO
             # Attributes of the Game class
             # Fills with None of type np.object
             self.board = np.full((4,4), None, dtype = np.object_)
@@ -227,24 +232,21 @@ class Gamestate:
 
         def givePiece(self):
             global canvasNP
-            global imagePaths
-            global terminalIO
-
             found = False
             for piece in range(0,16-self.turncount):
                 #if (self.remainingPieces[piece].id == contents.get()):
-                if (self.remainingPieces[piece].id == terminalIO.getInstruction()):
+                if (self.remainingPieces[piece].id == self.terminalIO.getInstruction()):
                     self.nextPiece = self.remainingPieces[piece]  #nextpiece start as (0,0,0,0,0)
                     found = True
-                    self.nextPieceImg = canvasNP.create_image([50,50], image=imagePaths[piece]['medium'])
+                    self.nextPieceImg = canvasNP.create_image([50,50], image=self.imagePaths[piece]['medium'])
             if (found == True):
                 self.remainingPieces.remove(self.nextPiece)
                 self.canvasRPhandler("delete", self.nextPiece.id-1)
                 #InstructionEntry.delete(first=0,last=10)
-                terminalIO.clearInstructionEntry()
+                self.terminalIO.clearInstructionEntry()
                 self.turncount += 1
                 self.event = None
-                sio.emit('nextPiece', {'id': int(self.nextPiece.id), 'shape': str(self.nextPiece.shape), 'color': str(self.nextPiece.color), 'line': str(self.nextPiece.line), 'number': self.nextPiece.number})
+                self.sio.emit('nextPiece', {'id': int(self.nextPiece.id), 'shape': str(self.nextPiece.shape), 'color': str(self.nextPiece.color), 'line': str(self.nextPiece.line), 'number': self.nextPiece.number})
                 #if (self.player1 == None or self.player2 == None):
                 #   self.AIturn()
             else:
@@ -254,29 +256,28 @@ class Gamestate:
                 else:
                     #InstructionEntry.delete(first=0,last=10)
                     #InstructionLabel.config(text='Nonexisting piece, please choose a piece that is left between 1-16:')
-                    terminalIO.clearInstructionEntry()
-                    terminalIO.updateInstructionLabel("instructionError1")
+                    self.terminalIO.clearInstructionEntry()
+                    self.terminalIO.updateInstructionLabel("instructionError1")
 
         def layPiece(self):
             global canvasNP
-            global terminalIO
             # User enters 0-16, decrement by 1 to make it -1 to 15
-            cont = terminalIO.getInstruction() - 1
+            cont = self.terminalIO.getInstruction() - 1
             #cont = contents.get() - 1
             column = cont % 4
             row = cont // 4
             if (cont < -1 or cont >= 16 or self.board[row,column] != None):
                 #InstructionEntry.delete(first=0,last=10)
                 #InstructionLabel.config(text='Nonexisting or taken tile please enter free tile between 1-16:')
-                terminalIO.clearInstructionEntry()
-                terminalIO.updateInstructionLabel("instructionError2")
+                self.terminalIO.clearInstructionEntry()
+                self.terminalIO.updateInstructionLabel("instructionError2")
 
             elif (cont == -1):
                 self.event = 3
             else:
                 #InstructionEntry.delete(first=0,last=10)
-                terminalIO.clearInstructionEntry()
-                sio.emit('board', cont)
+                self.terminalIO.clearInstructionEntry()
+                self.sio.emit('board', cont)
                 self.board[row,column] = self.nextPiece
                 if(Game.GAME_ENDED(self.board)==True):
                     print("ended") #here you can go back and break loop and such
@@ -288,17 +289,14 @@ class Gamestate:
 
         def pieceCanvas(self, id, canvas):
             global canvasGB
-            global imagePaths
-            global imageLocationsGB
-            canvasGB.create_image(imageLocationsGB[canvas], image=imagePaths[id-1]['regular'])
+            canvasGB.create_image(self.imageLocationsGB[canvas], image=self.imagePaths[id-1]['regular'])
 
         @sio.on('nextPiece')
         def nextpiece_event(data):
             global canvasNP
-            global imagePaths
             self.nextPiece = Gamestate.Piece(data.id, data.shape, data.color, data.line, data.number)
             self.nextPiece = Gamestate.Piece(data['id'], data['shape'], data['color'], data['line'], data['number'])
-            self.nextPieceImg = canvasNP.create_image([100,100], image=imagePaths[self.nextPiece.id-1]['regular'])
+            self.nextPieceImg = canvasNP.create_image([100,100], image=self.imagePaths[self.nextPiece.id-1]['regular'])
             self.remainingPieces.remove(self.nextPiece)
             self.canvasRPhandler("delete", self.nextPiece.id-1)
             self.event = 1
@@ -332,7 +330,6 @@ class Gamestate:
         """
         def AIturn(self):
             global canvasNP
-            global imagePaths
             # Returns moveInfo object
             print(self.nextPiece)
             if(1+self.turncount%2 == 1):
@@ -341,8 +338,8 @@ class Gamestate:
                 AImove = self.AI2.makeBestMove(self.board, self.remainingPieces, self.nextPiece, self.turncount) #skickar jag in riktiga eller copierar jag bara?
             print(AImove.location, AImove.score, AImove.nextPiece)
             self.board[AImove.location] = self.nextPiece
-            sio.emit('board', AImove.location[0]*4 + AImove.location[1])
-            sio.emit('board', {'data':AImove.location[0]*4 + AImove.location[1]})
+            self.sio.emit('board', AImove.location[0]*4 + AImove.location[1])
+            self.sio.emit('board', {'data':AImove.location[0]*4 + AImove.location[1]})
             if(Game.GAME_ENDED(self.board)==True):
                 print("ended") #Do fancy stuff if you wannt to quit
             self.pieceCanvas(self.nextPiece.id, AImove.location[0]*4 + AImove.location[1])
@@ -350,11 +347,11 @@ class Gamestate:
             for x in range(0,len(self.remainingPieces)):
                 if (self.remainingPieces[x].id == AImove.nextPiece.id):
                     self.nextPiece = self.remainingPieces[x]
-            self.nextPieceImg = canvasNP.create_image([100,100], image=imagePaths[self.nextPiece.id - 1]['regular'])
+            self.nextPieceImg = canvasNP.create_image([100,100], image=self.imagePaths[self.nextPiece.id - 1]['regular'])
             self.remainingPieces.remove(self.nextPiece)
             self.canvasRPhandler("delete", self.nextPiece.id-1)
             self.turncount += 1
-            sio.emit('nextPiece', self.nextPiece)
+            self.sio.emit('nextPiece', self.nextPiece)
 
 
         """
@@ -362,32 +359,31 @@ class Gamestate:
         acting as a stall state while waiting for users input as to which EVENT_HANDLER is called
         """
         def GAME_TURN(self):
-            global terminalIO # class for handling player IO
             if (self.event == 1):
                 #PlayerLabel.config(text='{}'.format(self.player1)) if ((1 + self.turncount % 2) == 1) else PlayerLabel.config(text='{}'.format(self.player2))
                 #InstructionLabel.config(text='Where to place current piece (1-16):')
                 if ((1 + self.turncount % 2) == 1):
-                    terminalIO.updatePlayerLabel(self.player1)
+                    self.terminalIO.updatePlayerLabel(self.player1)
                 else:
-                    terminalIO.updatePlayerLabel(self.player2)
+                    self.terminalIO.updatePlayerLabel(self.player2)
 
-                terminalIO.updateInstructionLabel("instructionPlace1")
+                self.terminalIO.updateInstructionLabel("instructionPlace1")
 
             elif (self.event == 2):
                 #PlayerLabel.config(text='{}'.format(self.player1)) if ((1 + self.turncount % 2) == 1) else PlayerLabel.config(text='{}'.format(self.player2))
                 #InstructionLabel.config(text='Number of piece to give away (1-16):')
                 if ((1 + self.turncount % 2) == 1):
-                    terminalIO.updatePlayerLabel(self.player1)
+                    self.terminalIO.updatePlayerLabel(self.player1)
                 else:
-                    terminalIO.updatePlayerLabel(self.player2)
+                    self.terminalIO.updatePlayerLabel(self.player2)
 
-                terminalIO.updateInstructionLabel("instructionSelect2")
+                self.terminalIO.updateInstructionLabel("instructionSelect2")
 
     
-            def canvasRPhandler(self, action, number):
-                global canvasRP
-                if (action == "delete"):
-                    canvasRP.delete(self.indexRemainingPieces[number])
+        def canvasRPhandler(self, action, number):
+            global canvasRP
+            if (action == "delete"):
+                canvasRP.delete(self.indexRemainingPieces[number])
 
     class Piece:
         def __init__(self, id, shape, color, line, number):
