@@ -43,12 +43,12 @@ class Menu:
         # Action prompt
         promptText2 = tk.Label(self.menu, anchor="nw", justify=tk.LEFT, font=('Helvetica', 12), text='2. Create or join existing game')
         promptText2.pack(fill = tk.X)
+        self.newButton = tk.Button(self.menu, font=('Helvetica', 12),text='New Game', command = self.nbCallback)
+        self.newButton.pack(fill=tk.X)
         # Listbox with waiting games
         self.gList = tk.Listbox(self.menu, name='gList', font=('Helvetica', 12), height=20, width=40)
         self.gList.bind('<<ListboxSelect>>', self.onselect)
         self.gList.pack(fill=tk.X)
-        self.newButton = tk.Button(self.menu, font=('Helvetica', 12),text='New Game', command = self.nbCallback)
-        self.newButton.pack(fill=tk.X)
         self.joinButton = tk.Button(self.menu, font=('Helvetica', 12), text='Join Game', state=tk.DISABLED, command = self.jbCallback)
         self.joinButton.pack(fill=tk.X)
         self.quitButton = tk.Button(self.menu, font=('Helvetica', 12), text = 'Quit', command = self.quitCallback)
@@ -63,26 +63,33 @@ class Menu:
 
     def updateList(self):
         global gameList
-        print("update list",gameList)
-        self.gList.delete(0,len(gameList)-1)
+        print("update list", gameList)
+        self.gList.delete(0, len(gameList)-1)
         if (len(gameList)>0):
             self.joinButton['state']=tk.NORMAL
         for lobby in gameList:
-            self.gList.insert(tk.END,lobby.player1)
+            self.gList.insert(tk.END, lobby.player1)
 
+    # Creates dialog for creating a new game
     def nbCallback(self):
+        # Check if player 1 name is entered
+        if (self.player1nameWidget.get() == ""):
+            # Post error message "Player 1 name may not be empty"
+            messagebox.showerror('Error', 'Player name is missing')
+            # tk.messagebox.showerror(portalScreenTexts[6], portalScreenTexts[8])
+            return
         self.newForm = tk.Toplevel(self.menu)
-        p1label = tk.Label(self.newForm, text="Player 1 name:")
-        p1label.pack_configure(fill=tk.X)
-        p1name = tk.Entry(self.newForm)
-        p1name.pack_configure(fill=tk.X)
+        #p1label = tk.Label(self.newForm, text="Player 1 name:")
+        #p1label.pack_configure(fill=tk.X)
+        #p1name = tk.Entry(self.newForm)
+        #p1name.pack_configure(fill=tk.X)
         var = tk.StringVar(self.newForm)
         var.set(None)
         p2label = tk.Label(self.newForm, text="Player 2:")
         p2label.pack_configure(fill=tk.X)
         p2select = tk.OptionMenu(self.newForm, var, tuple(self.aiOptions[0]),tuple(self.aiOptions[1]),tuple(self.aiOptions[2]))
         p2select.pack_configure(fill=tk.X)
-        nfsubmit = tk.Button(self.newForm, text='create game', command = lambda: self.creategame({'p1name': p1name.get(), 'AI': str(var)}))
+        nfsubmit = tk.Button(self.newForm, text='create game', command = lambda: self.creategame({'p1name': self.player1nameWidget.get(), 'AI': str(var)}))
         nfsubmit.pack_configure()
         nfcancel = tk.Button(self.newForm, text='cancel', command = lambda: self.cancelTopwindow(newForm))
         nfcancel.pack_configure()
