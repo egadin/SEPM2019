@@ -95,15 +95,21 @@ class Menu:
         nfcancel.pack_configure()
 
     def jbCallback(self):
+        # Check if player 1 name is entered
+        if (self.player1nameWidget.get() == ""):
+            # Post error message "Player 1 name may not be empty"
+            messagebox.showerror('Error', 'Player name is missing')
+            # tk.messagebox.showerror(portalScreenTexts[6], portalScreenTexts[8])
+            return
         self.newForm = tk.Toplevel(self.menu)
-        p2label = tk.Label(self.newForm, text="Player 1 name:")
-        p2label.pack_configure(fill=tk.X)
-        p2name = tk.Entry(self.newForm)
-        p2name.pack_configure(fill=tk.X)
-        jfsubmit = tk.Button(self.newForm, text='join game', command = lambda: self.joingame(p2name.get()))
-        jfsubmit.pack_configure()
+        #p2label = tk.Label(self.newForm, text="Player 1 name:")
+        #p2label.pack_configure(fill=tk.X)
+        #p2name = tk.Entry(self.newForm)
+        #p2name.pack_configure(fill=tk.X)
+        jfsubmit = tk.Button(self.newForm, text='join game', command = lambda: self.joingame(self.player1nameWidget.get()))
+        jfsubmit.pack_configure(fill = tk.X)
         jfcancel = tk.Button(self.newForm, text='cancel', command = lambda: self.cancelTopwindow(newForm))
-        jfcancel.pack_configure()
+        jfcancel.pack_configure(fill = tk.X)
 
     # Quits client; disconnect from server, demolish window, and quit
     def quitCallback(self):
