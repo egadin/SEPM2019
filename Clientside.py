@@ -50,18 +50,24 @@ class Menu:
         self.gList = tk.Listbox(self.menu, name='gList', font=('Helvetica', 12))
         self.gList.bind('<<ListboxSelect>>', self.onselect)
         self.gList.pack(fill=tk.X)
+        #
+        # Request update of gamelbbies here!
+        #
         self.joinButton = tk.Button(self.menu, font=('Helvetica', 12), text='Join Game', state=tk.DISABLED, command = self.jbCallback)
         self.joinButton.pack(fill=tk.X)
         self.quitButton = tk.Button(self.menu, font=('Helvetica', 12), text = 'Quit', command = self.quitCallback)
         self.quitButton.pack(fill = tk.X)
         self.aiOptions = ['Easy','Medium','Hard']
-        self.aiTexts = ['Wait for human player', 'Easy AI', 'Medium AI', 'Hard AI']
         self.menu.pack(fill=tk.Y)
 
     def onselect(self,evt):
         # Note here that Tkinter passes an event object to onselect()
         w = evt.widget
-        self.selectedGame = w.curselection()[0]
+        # Check if something is selected
+        if (w.curselection() == ()):
+            self.selectedGame = None
+        else:
+            self.selectedGame = w.curselection()[0]
 
     def updateList(self):
         global gameList
@@ -94,9 +100,9 @@ class Menu:
         #p2label.pack_configure(fill = tk.X)
         p2select = tk.OptionMenu(self.newForm, var, tuple(self.aiOptions[0]),tuple(self.aiOptions[1]),tuple(self.aiOptions[2]))
         p2select.pack_configure(fill=tk.X)
-        nfsubmit = tk.Button(self.newForm, text='Create Game', command = lambda: self.creategame({'p1name': self.player1nameWidget.get(), 'AI': str(var)}))
+        nfsubmit = tk.Button(self.newForm, font=('Helvetica', 12), text='Create Game', command = lambda: self.creategame({'p1name': self.player1nameWidget.get(), 'AI': str(var)}))
         nfsubmit.pack_configure()
-        nfcancel = tk.Button(self.newForm, text='Cancel', command = lambda: self.cancelTopwindow(self.newForm))
+        nfcancel = tk.Button(self.newForm, font=('Helvetica', 12), text='Cancel', command = lambda: self.cancelTopwindow(self.newForm))
         nfcancel.pack_configure()
 
     def jbCallback(self):
@@ -128,14 +134,16 @@ class Menu:
         self.root.destroy()
         sys.exit()
 
+    # Callback for Create Game button
     def creategame(self,data):
+        # Player 1 is creating a game, but has no ID;
         sio.emit('create gamelobby', {'id': None, 'player1id': None, 'player2id': None, 'player1': data['p1name'], 'player2': None, 'AI1': None, 'AI2': data['AI'], 'winner': None})
         self.newForm.destroy()
 
     def joingame(self, data):
         global gameList
         sio.emit('join gamelobby', {'player2':data, 'gameid': gameList[self.selectedGame].id})
-        sio.emit('start gamelobby') # This does not have a corresponding receiver in the server
+        sio.emit('start gamelobby')
 
     def cancelTopwindow(self,data):
         data.destroy()

@@ -119,6 +119,7 @@ async def updatelobby():
     global gamelist
     for lobby in gamelist:
         sendlist.append(lobby.toDictionary())
+        print("Sending the following gamelobby list:")
         print(repr(sendlist))
         #sendlist.append({'id': lobby.id, 'player1id': lobby.player1id, 'player2id': lobby.player2id, 'player1': lobby.player1, 'player2': lobby.player2, 'AI1': lobby.AI1, 'AI2': lobby.AI2, 'winner': lobby.winner, 'room': lobby.room})
     await sio.emit('lobby update', sendlist)
@@ -142,7 +143,7 @@ async def joingame_event(sid, data):
 async def startgame_event(sid):
     # Find the game in gamelist, where player1 or 2 have id = sid
     global gamelist
-    print("sid"+sid)
+    print("Starting game with sid "+sid)
     flist=filter(lambda game: game.player1id == sid or game.player2id == sid, gamelist)
     currentgame=next(flist)
     print("current game"+repr(currentgame))
