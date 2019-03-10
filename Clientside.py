@@ -20,6 +20,7 @@ sio = socketio.Client()
 sio.connect('http://localhost:8080')
 
 root = tk.Tk()
+root.title('UU-GAME')
 
 class Menu:
     def __init__(self, sio):
@@ -28,14 +29,29 @@ class Menu:
         self.menu = tk.Frame(root)
         self.selectedGame = None
         self.sio = sio
-        self.gList = tk.Listbox(self.menu, name='gList', height=20, width=40)
+        # Menu header
+        # Welcome text
+        # Player name prompt
+        promptText1 = tk.Label(self.menu, anchor="nw", justify=tk.LEFT, font=('Helvetica', 12), text='1. Enter name')
+        promptText1.pack(fill = tk.X)
+        # Player 1 name variable
+        self.player1name = tk.StringVar()
+        # Player 1 name entry field
+        self.player1nameWidget = tk.Entry(self.menu, bg="snow", font=('Helvetica', 14), relief=tk.SUNKEN,
+                                     textvariable=self.player1name)
+        self.player1nameWidget.pack(fill = tk.X)
+        # Action prompt
+        promptText2 = tk.Label(self.menu, anchor="nw", justify=tk.LEFT, font=('Helvetica', 12), text='2. Create or join existing game')
+        promptText2.pack(fill = tk.X)
+        # Listbox with waiting games
+        self.gList = tk.Listbox(self.menu, name='gList', font=('Helvetica', 12), height=20, width=40)
         self.gList.bind('<<ListboxSelect>>', self.onselect)
         self.gList.pack(fill=tk.X)
-        self.newButton = tk.Button(self.menu, text='New Game', command = self.nbCallback)
+        self.newButton = tk.Button(self.menu, font=('Helvetica', 12),text='New Game', command = self.nbCallback)
         self.newButton.pack(fill=tk.X)
-        self.joinButton = tk.Button(self.menu, text='Join Game', state=tk.DISABLED, command = self.jbCallback)
+        self.joinButton = tk.Button(self.menu, font=('Helvetica', 12), text='Join Game', state=tk.DISABLED, command = self.jbCallback)
         self.joinButton.pack(fill=tk.X)
-        self.quitButton = tk.Button(self.menu, text = 'Quit', command = self.quitCallback)
+        self.quitButton = tk.Button(self.menu, font=('Helvetica', 12), text = 'Quit', command = self.quitCallback)
         self.quitButton.pack(fill = tk.X)
         self.aiOptions = ['Easy','Medium','Hard']
         self.menu.pack(fill=tk.Y)
@@ -574,19 +590,19 @@ class Gamestate:
                 }
 
             # Prompt for player (player 1 or 2)
-            PlayerLabel = tk.Label(root, text="Player 1", font=("Helvetica", 14))
+            PlayerLabel = tk.Label(root, text="Player 1", font=('Helvetica', 14))
             PlayerLabel.place(x = x_start, y = (y_start + 25))
             self.PlayerLabel = PlayerLabel
 
             # Instructions to player
-            InstructionLabel = tk.Label(root, text=self.outputTexts["instructionSelect1"], font=("Helvetica", 14), anchor="w")
+            InstructionLabel = tk.Label(root, text=self.outputTexts["instructionSelect1"], font=('Helvetica', 14), anchor="w")
             InstructionLabel.place(x=x_start, y=(y_start + 57))
             self.InstructionLabel = InstructionLabel
             contents = tk.IntVar()
             self.contents = contents
 
             # Players entry field
-            InstructionEntry = tk.Entry(root, bd = 5, textvariable=contents, bg="snow", relief=tk.SUNKEN, font=("Helvetica", 14))
+            InstructionEntry = tk.Entry(root, bd = 5, textvariable=contents, bg="snow", relief=tk.SUNKEN, font=('Helvetica', 14))
             InstructionEntry.place(x=x_start, y=(y_start + 95))
             self.InstructionEntry = InstructionEntry
 
@@ -632,7 +648,7 @@ class Gamestate:
                 image_y = y * side_step + round(side / 2) + gap
                 imageLocationsGB.append( [image_x, image_y] )
                 # Also place position number on squares
-                lbl = tk.Label(canvasGB, text=str( x + 1 + y * 4), font=("Helvetica", 24, "bold"), fg="dark grey")
+                lbl = tk.Label(canvasGB, text=str( x + 1 + y * 4), font=('Helvetica', 24, "bold"), fg="dark grey")
                 lbl.place(x=image_x - 25, y=image_y - 25, width=50, height=50)  # center placement
                 # lbl.place(x=(gap + x * side_step + 5), y=(gap + y * side_step) + 5)  # corner placement
 
@@ -709,7 +725,7 @@ class Gamestate:
         # Draw icons in imageLocationsRP on canvas
         for c in range(16):
             indexRemainingPieces.append(canvasRP.create_image(imageLocationsRP[c], image=imagePaths[c]['tiny']))
-            lbl = tk.Label(canvasRP, text=str(c + 1), font=("Helvetica", 14), anchor="center", bg="light grey", fg="dim grey")
+            lbl = tk.Label(canvasRP, text=str(c + 1), font=('Helvetica', 14), anchor="center", bg="light grey", fg="dim grey")
             lbl.place(x=10, y=imageLocationsRP[c][1] - 25, width=30, height=50)
 
         return imagePaths, imageLocationsRP, indexRemainingPieces
