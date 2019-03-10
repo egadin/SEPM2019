@@ -12,6 +12,11 @@ import socketio
 import aiohttp
 import asyncio
 import time
+from os import path
+import numpy as np
+import random
+import copy
+from PIL import Image, ImageTk
 
 gameList = []
 sio = socketio.Client()
@@ -104,6 +109,7 @@ class Menu:
         global menu
         global sio
         menu.menu.destroy()
+        print(repr(data))
         Gamestate(sio, gamelobby.fromDictionary(data))
 
 
@@ -113,11 +119,11 @@ class Gamestate:
         self.sio = sio
         self.lobby = lobby
         self.gametk = tk.Frame(root)
-        imageLocationsGB, GBheight = Gamestate.initGameScreen(self.gametk)
-        imagePaths, imageLocationsRP, indexRemainingPieces = Gamestate.initRPcanvas(self.gametk)
-        terminalIO = IOarea(root, 335, GBheight + 10)
-        tictoc = Game(self.lobby.player1, lobby.player2, lobby.AI1, lobby.AI2)
-        elf.ametk.bind('<Return>', tictoc.EVENT_HANDLER)
+        self.imageLocationsGB, self.GBheight = Gamestate.initGameScreen(self.gametk)
+        self.imagePaths, self.imageLocationsRP, self.indexRemainingPieces = Gamestate.initRPcanvas(self.gametk)
+        self.terminalIO = Gamestate.IOarea(root, 335, self.GBheight + 10)
+        tictoc = Gamestate.Game(self.lobby.player1, self.lobby.player2, self.lobby.AI1, self.lobby.AI2)
+        self.gametk.bind('<Return>', tictoc.EVENT_HANDLER)
         tictoc.canvasRPhandler("start",1)
         tictoc.GAME_TURN() 
 
@@ -130,8 +136,8 @@ class Gamestate:
             # Attributes of the Game class
             # Fills with None of type np.object
             self.board = np.full((4,4), None, dtype = np.object_)
-            self.pieces = [Piece(1,"round","black","dotted",0),Piece(2,"round","black","dotted",1),Piece(3,"round","black","line",0),Piece(4,"round","black","line",1),Piece(5,"round","blue","dotted",0),Piece(6,"round","blue","dotted",1),Piece(7,"round","blue","line",0),Piece(8,"round","blue","line",1),
-            Piece(9,"square","black","dotted",0),Piece(10,"square","black","dotted",1),Piece(11,"square","black","line",0),Piece(12,"square","black","line",1),Piece(13,"square","blue","dotted",0),Piece(14,"square","blue","dotted",1),Piece(15,"square","blue","line",0),Piece(16,"square","blue","line",1)]
+            self.pieces = [Gamestate.Piece(1,"round","black","dotted",0),Gamestate.Piece(2,"round","black","dotted",1),Gamestate.Piece(3,"round","black","line",0),Gamestate.Piece(4,"round","black","line",1),Gamestate.Piece(5,"round","blue","dotted",0),Gamestate.Piece(6,"round","blue","dotted",1),Gamestate.Piece(7,"round","blue","line",0),Gamestate.Piece(8,"round","blue","line",1),
+            Gamestate.Piece(9,"square","black","dotted",0),Gamestate.Piece(10,"square","black","dotted",1),Gamestate.Piece(11,"square","black","line",0),Gamestate.Piece(12,"square","black","line",1),Gamestate.Piece(13,"square","blue","dotted",0),Gamestate.Piece(14,"square","blue","dotted",1),Gamestate.Piece(15,"square","blue","line",0),Gamestate.Piece(16,"square","blue","line",1)]
             self.remainingPieces = self.pieces
             self.nextPiece = None
             self.turncount = 0
@@ -141,7 +147,7 @@ class Gamestate:
             self.player1 = None
             self.player2 = None
             # Inintiates the remaning pieces on the screen
-            self.indexRemainingPieces = [canvasRP.create_image(imageLocationsRP[c], image=imagePaths[c]['small']) for c in range(16)]
+            self.indexRemainingPieces = [canvasRP.create_image(self.imageLocationsRP[c], image=self.imagePaths[c]['small']) for c in range(16)]
             self.nextPieceImg = None
             self.AI1 = AI1
             self.AI2 = AI2
@@ -269,7 +275,7 @@ class Gamestate:
                 self.event = 3
             else:
                 #InstructionEntry.delete(first=0,last=10)
-                terminalIO.clearInstructionEntry();
+                terminalIO.clearInstructionEntry()
                 sio.emit('board', cont)
                 self.board[row,column] = self.nextPiece
                 if(Game.GAME_ENDED(self.board)==True):
@@ -290,8 +296,8 @@ class Gamestate:
         def nextpiece_event(data):
             global canvasNP
             global imagePaths
-            self.nextPiece = Piece(data.id, data.shape, data.color, data.line, data.number)
-            self.nextPiece = Piece(data['id'], data['shape'], data['color'], data['line'], data['number'])
+            self.nextPiece = Gamestate.Piece(data.id, data.shape, data.color, data.line, data.number)
+            self.nextPiece = Gamestate.Piece(data['id'], data['shape'], data['color'], data['line'], data['number'])
             self.nextPieceImg = canvasNP.create_image([100,100], image=imagePaths[self.nextPiece.id-1]['regular'])
             self.remainingPieces.remove(self.nextPiece)
             self.canvasRPhandler("delete", self.nextPiece.id-1)
@@ -681,7 +687,7 @@ class Gamestate:
         # Set up dictionary with two sizes of respective image
         imagePaths = [
             {
-                "regular": image,Path
+                "regular": image,
                 "medium" : image.subsample(2),
                 "small": image.subsample(3),
                 "tiny" : image.subsample(4)

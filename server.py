@@ -102,8 +102,8 @@ async def requestevent(sid):
 async def creategame_event(sid, data):
     print("create game server")
     global gamelist
-    gamelist.append(gamelobby.fromDictionary(data))
-    #gamelist.append(gamelobby(sid, sid, data['player2id'], data['player1'], data['player2'], data['AI1'], data['AI2'] , data['winner'], data['room']))
+    #gamelist.append(gamelobby.fromDictionary(data))
+    gamelist.append(gamelobby(sid, sid, data['player2id'], data['player1'], data['player2'], data['AI1'], data['AI2'] , data['winner']))
     print(gamelist)
     await updatelobby()
 
@@ -146,7 +146,7 @@ async def startgame_event(sid):
     roomlist.append(newroom)
     sio.enter_room(currentgame.player1id, str(currentgame.player1id))
     sio.enter_room(currentgame.player2id, str(currentgame.player1id))
-    await sio.emit('init game', {'data':gamelobby.toDictionary(currentgame)}, room=str(currentgame.player1id))
+    await sio.emit('init game', data=gamelobby.toDictionary(currentgame), room=str(currentgame.player1id))
     await sio.emit('start game', room=str(currentgame.player1id), skip_sid=currentgame.player2id)
 """
 fix data outputs to dict
