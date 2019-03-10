@@ -105,10 +105,11 @@ async def requestevent(sid):
 
 @sio.on('create gamelobby') #I didn't accept the todict since data doesn't contain all the neccessary variables.
 async def creategame_event(sid, data):
-    print("create game server")
+    print("creating game lobby")
     global gamelist
     gamelist.append(gamelobby.fromDictionary(data))
     #gamelist.append(gamelobby(sid, sid, data['player2id'], data['player1'], data['player2'], data['AI1'], data['AI2'] , data['winner'], data['room']))
+    print("Current game lobbies are:")
     print(gamelist)
     await updatelobby()
 
@@ -125,7 +126,7 @@ async def updatelobby():
 
 @sio.on('join gamelobby')
 async def joingame_event(sid, data):
-    print("join lobby server")
+    print("Player "+data['player2']+" joined lobby server")
     global gamelist
     for game in gamelist:
         print(game.id)
@@ -137,7 +138,7 @@ async def joingame_event(sid, data):
             break
 
 
-@sio.on('start game')
+@sio.on('start gamelobby')
 async def startgame_event(sid):
     # Find the game in gamelist, where player1 or 2 have id = sid
     global gamelist

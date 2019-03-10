@@ -26,13 +26,14 @@ class Menu:
     def __init__(self, sio):
         # There is one window, root, that has a frame, menu, drawn on it
         self.root = root
+        #self.root.geometry("200x350")
         self.menu = tk.Frame(root)
         self.selectedGame = None
         self.sio = sio
         # Menu header
         # Welcome text
         # Player name prompt
-        promptText1 = tk.Label(self.menu, anchor="nw", justify=tk.LEFT, font=('Helvetica', 12), text='1. Enter name')
+        promptText1 = tk.Label(self.menu, anchor="nw", justify=tk.LEFT, font=('Helvetica', 12), bd=10, text='1. Enter name')
         promptText1.pack(fill = tk.X)
         # Player 1 name variable
         self.player1name = tk.StringVar()
@@ -41,12 +42,12 @@ class Menu:
                                      textvariable=self.player1name)
         self.player1nameWidget.pack(fill = tk.X)
         # Action prompt
-        promptText2 = tk.Label(self.menu, anchor="nw", justify=tk.LEFT, font=('Helvetica', 12), text='2. Create or join existing game')
+        promptText2 = tk.Label(self.menu, anchor="nw", justify=tk.LEFT, font=('Helvetica', 12), bd=10, text='2. Create new or join an existing game')
         promptText2.pack(fill = tk.X)
         self.newButton = tk.Button(self.menu, font=('Helvetica', 12),text='New Game', command = self.nbCallback)
         self.newButton.pack(fill=tk.X)
         # Listbox with waiting games
-        self.gList = tk.Listbox(self.menu, name='gList', font=('Helvetica', 12), height=20, width=40)
+        self.gList = tk.Listbox(self.menu, name='gList', font=('Helvetica', 12))
         self.gList.bind('<<ListboxSelect>>', self.onselect)
         self.gList.pack(fill=tk.X)
         self.joinButton = tk.Button(self.menu, font=('Helvetica', 12), text='Join Game', state=tk.DISABLED, command = self.jbCallback)
@@ -54,6 +55,7 @@ class Menu:
         self.quitButton = tk.Button(self.menu, font=('Helvetica', 12), text = 'Quit', command = self.quitCallback)
         self.quitButton.pack(fill = tk.X)
         self.aiOptions = ['Easy','Medium','Hard']
+        self.aiTexts = ['Wait for human player', 'Easy AI', 'Medium AI', 'Hard AI']
         self.menu.pack(fill=tk.Y)
 
     def onselect(self,evt):
@@ -84,14 +86,17 @@ class Menu:
         #p1name = tk.Entry(self.newForm)
         #p1name.pack_configure(fill=tk.X)
         var = tk.StringVar(self.newForm)
-        var.set(None)
-        p2label = tk.Label(self.newForm, text="Player 2:")
-        p2label.pack_configure(fill=tk.X)
+        # Prompt
+        promptText = tk.Label(self.newForm, anchor="nw", justify=tk.LEFT, font=('Helvetica', 12), bd=10, text="Select opponent;\n'None' to wait for human or\nlevel of AI opponent")
+        promptText.pack_configure(fill = tk.X)
+        var.set(None) # this is the 'None' alternative
+        #p2label = tk.Label(self.newForm, text="Player 2:")
+        #p2label.pack_configure(fill = tk.X)
         p2select = tk.OptionMenu(self.newForm, var, tuple(self.aiOptions[0]),tuple(self.aiOptions[1]),tuple(self.aiOptions[2]))
         p2select.pack_configure(fill=tk.X)
-        nfsubmit = tk.Button(self.newForm, text='create game', command = lambda: self.creategame({'p1name': self.player1nameWidget.get(), 'AI': str(var)}))
+        nfsubmit = tk.Button(self.newForm, text='Create Game', command = lambda: self.creategame({'p1name': self.player1nameWidget.get(), 'AI': str(var)}))
         nfsubmit.pack_configure()
-        nfcancel = tk.Button(self.newForm, text='cancel', command = lambda: self.cancelTopwindow(newForm))
+        nfcancel = tk.Button(self.newForm, text='Cancel', command = lambda: self.cancelTopwindow(self.newForm))
         nfcancel.pack_configure()
 
     def jbCallback(self):
@@ -101,6 +106,11 @@ class Menu:
             messagebox.showerror('Error', 'Player name is missing')
             # tk.messagebox.showerror(portalScreenTexts[6], portalScreenTexts[8])
             return
+        # Join waiting game
+        self.joingame(self.player1nameWidget.get())
+        # Quit dialog here
+        self.cancelTopwindow(self.newForm)
+        """
         self.newForm = tk.Toplevel(self.menu)
         #p2label = tk.Label(self.newForm, text="Player 1 name:")
         #p2label.pack_configure(fill=tk.X)
@@ -108,8 +118,9 @@ class Menu:
         #p2name.pack_configure(fill=tk.X)
         jfsubmit = tk.Button(self.newForm, text='join game', command = lambda: self.joingame(self.player1nameWidget.get()))
         jfsubmit.pack_configure(fill = tk.X)
-        jfcancel = tk.Button(self.newForm, text='cancel', command = lambda: self.cancelTopwindow(newForm))
+        jfcancel = tk.Button(self.newForm, text='cancel', command = lambda: self.cancelTopwindow(self.newForm))
         jfcancel.pack_configure(fill = tk.X)
+        """
 
     # Quits client; disconnect from server, demolish window, and quit
     def quitCallback(self):
