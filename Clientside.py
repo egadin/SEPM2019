@@ -55,24 +55,25 @@ class Menu:
 
     def nbCallback(self): 
         self.newForm = tk.Toplevel(self.menu)
-        p1label = tk.Label(self.newForm, text="Player 1 name:")
+        p1label = tk.Label(self.newForm, text="Player name:")
         p1label.pack_configure(fill=tk.X)
         p1name = tk.Entry(self.newForm)
         p1name.pack_configure(fill=tk.X)
         var = tk.StringVar(self.newForm)
         var.set(None)
+        print(var.get())
         p2label = tk.Label(self.newForm, text="Player 2:")
         p2label.pack_configure(fill=tk.X)
         p2select = tk.OptionMenu(self.newForm, var, tuple(self.aiOptions[0]),tuple(self.aiOptions[1]),tuple(self.aiOptions[2]))
         p2select.pack_configure(fill=tk.X)
-        nfsubmit = tk.Button(self.newForm, text='create game', command = lambda: self.creategame({'p1name': p1name.get(), 'AI': str(var)}))
+        nfsubmit = tk.Button(self.newForm, text='create game', command = lambda: self.creategame({'p1name': p1name.get(), 'AI': var.get()}))
         nfsubmit.pack_configure()
         nfcancel = tk.Button(self.newForm, text='cancel', command = lambda: self.cancelTopwindow(newForm))
         nfcancel.pack_configure()
 
     def jbCallback(self): 
         self.newForm = tk.Toplevel(self.menu)
-        p2label = tk.Label(self.newForm, text="Player 1 name:")
+        p2label = tk.Label(self.newForm, text="Player name:")
         p2label.pack_configure(fill=tk.X)
         p2name = tk.Entry(self.newForm)
         p2name.pack_configure(fill=tk.X)
@@ -154,8 +155,8 @@ class Gamestate:
             # Next thing for the event handler
             self.event = 2
             # Names of players
-            self.player1 = None
-            self.player2 = None
+            self.player1 = player1
+            self.player2 = player2
             # Inintiates the remaning pieces on the screen
             self.indexRemainingPieces = [canvasRP.create_image(self.imageLocationsRP[c], image=self.imagePaths[c]['small']) for c in range(16)]
             self.nextPieceImg = None
@@ -228,7 +229,7 @@ class Gamestate:
             if (self.event == 2):
                 self.givePiece()
             elif (self.event == 1):
-                if ((((1 + self.turncount % 2) != 1) and self.player2 == None) or ((1 + self.turncount % 2) == 1) and self.player1 == None):
+                if ((((1 + self.turncount % 2) != 1) and self.player2 == None) or (((1 + self.turncount % 2) == 1) and self.player1 == None)):
                     self.AIturn()
                 else:
                     self.layPiece()
@@ -251,7 +252,7 @@ class Gamestate:
                 self.terminalIO.clearInstructionEntry()
                 self.turncount += 1
                 self.event = None
-                self.sio.emit('nextPiece', {'id': int(self.nextPiece.id), 'shape': str(self.nextPiece.shape), 'color': str(self.nextPiece.color), 'line': str(self.nextPiece.line), 'number': self.nextPiece.number})
+                self.sio.emit('nextPiece', {'id': int(self.nextPiece.id), 'shape': str(self.nextPiece.shape), 'color': str(self.nextPiece.color), 'line': str(self.nextPiece.line), 'number': self.nextPiece.number, 'turn': self.turncount})
                 #if (self.player1 == None or self.player2 == None):
                 #   self.AIturn()
             else:
@@ -302,18 +303,18 @@ class Gamestate:
             tictoc.nextPieceImg = canvasNP.create_image([100,100], image=tictoc.imagePaths[tictoc.nextPiece.id-1]['regular'])
             print(repr(tictoc.remainingPieces))
             print(repr(tictoc.nextPiece))
-            tictoc.remainingPieces.remove(tictoc.nextPiece)
-            tictoc.canvasRPhandler("delete", tictoc.nextPiece.id-1)
+            print(tictoc.turncount)
+            if (data['turn']>tictoc.turncount):
+                tictoc.remainingPieces.remove(tictoc.nextPiece)
+                tictoc.canvasRPhandler("delete", tictoc.nextPiece.id-1)
+                tictoc.turncount +=1
             tictoc.event = 1
-            tictoc.turncount +=1
             tictoc.GAME_TURN()
 
         @sio.on('board')
         def board_event(data):
             global canvasNP
             global tictoc
-            column = cont % 4
-            row = cont // 4
             column = data % 4
             row = data // 4
             tictoc.board[row,column] = tictoc.nextPiece
@@ -324,8 +325,9 @@ class Gamestate:
 
         @sio.on('start game')
         def start_event():
-            self.event = 1
-            self.GAME_TURN()
+            global tictoc
+            tictoc.event = 1
+            tictoc.GAME_TURN()
 
         
         """
