@@ -108,29 +108,31 @@ class Menu:
     def initgame(data):
         global menu
         global sio
+        menu.gList.unbind('<<ListBoxSelect>>')
         menu.menu.destroy()
         print(repr(data))
         Gamestate(sio, gamelobby.fromDictionary(data))
 
-
-
 class Gamestate:
     def __init__(self, sio, lobby):
+        global tictoc
+        global canvasGB, canvasNP, canvasRP
         self.sio = sio
         self.lobby = lobby
-        self.gametk = tk.Frame(root)
+        self.gametk = tk.Frame(root, width=1058, height=1058)
         self.imageLocationsGB, self.GBheight = Gamestate.initGameScreen(self.gametk)
         self.imagePaths, self.imageLocationsRP, self.indexRemainingPieces = Gamestate.initRPcanvas(self.gametk)
-        self.terminalIO = Gamestate.IOarea(root, 335, self.GBheight + 10)
+        self.terminalIO = Gamestate.IOarea(self.gametk, 335, self.GBheight + 10)
         tictoc = Gamestate.Game(self.lobby.player1, self.lobby.player2, self.lobby.AI1, self.lobby.AI2, self.sio, self.imageLocationsGB,
-        self.GBheight, self.imagePaths, self.imageLocationsRP, self.indexRemainingPieces, self.terminalIO)
-        self.gametk.bind('<Return>', tictoc.EVENT_HANDLER)
+        self.GBheight, self.imagePaths, self.imageLocationsRP, self.indexRemainingPieces, self.terminalIO, canvasGB, canvasNP, canvasRP)
         tictoc.canvasRPhandler("start",1)
+        self.gametk.pack()
+        self.gametk.focus_set()
+        self.terminalIO.InstructionEntry.bind('<Return>', tictoc.EVENT_HANDLER)
         tictoc.GAME_TURN() 
 
     class Game:
-        def __init__(self, player1, player2, AI1, AI2, sio, imageLocationsGB, GBheight, imagePaths, imageLocationsRP, indexRemainingPieces, terminalIO):
-            global canvasRP # Canvas w remaining pieces
+        def __init__(self, player1, player2, AI1, AI2, sio, imageLocationsGB, GBheight, imagePaths, imageLocationsRP, indexRemainingPieces, terminalIO, canvasGB, canvasNP, canvasRP):
             self.imageLocationsRP = imageLocationsRP
             self.imagePaths = imagePaths 
             self.sio = sio
@@ -138,6 +140,9 @@ class Gamestate:
             self.GBheight = GBheight
             self.indexRemainingPieces = indexRemainingPieces
             self.terminalIO = terminalIO
+            self.canvasGB = canvasGB
+            self.canvasNP = canvasNP
+            self.canvasRP = canvasRP
             # Attributes of the Game class
             # Fills with None of type np.object
             self.board = np.full((4,4), None, dtype = np.object_)
@@ -215,6 +220,7 @@ class Gamestate:
 
 
         def EVENT_HANDLER(self, e):
+            print("tjo event")
             # Event values
             # - 1: layPiece
             # - 2: givePiece
@@ -231,14 +237,13 @@ class Gamestate:
 
 
         def givePiece(self):
-            global canvasNP
             found = False
             for piece in range(0,16-self.turncount):
                 #if (self.remainingPieces[piece].id == contents.get()):
                 if (self.remainingPieces[piece].id == self.terminalIO.getInstruction()):
                     self.nextPiece = self.remainingPieces[piece]  #nextpiece start as (0,0,0,0,0)
                     found = True
-                    self.nextPieceImg = canvasNP.create_image([50,50], image=self.imagePaths[piece]['medium'])
+                    self.nextPieceImg = self.canvasNP.create_image([50,50], image=self.imagePaths[piece]['medium'])
             if (found == True):
                 self.remainingPieces.remove(self.nextPiece)
                 self.canvasRPhandler("delete", self.nextPiece.id-1)
@@ -260,7 +265,6 @@ class Gamestate:
                     self.terminalIO.updateInstructionLabel("instructionError1")
 
         def layPiece(self):
-            global canvasNP
             # User enters 0-16, decrement by 1 to make it -1 to 15
             cont = self.terminalIO.getInstruction() - 1
             #cont = contents.get() - 1
@@ -282,39 +286,41 @@ class Gamestate:
                 if(Game.GAME_ENDED(self.board)==True):
                     print("ended") #here you can go back and break loop and such
                 self.pieceCanvas(self.nextPiece.id, cont)
-                canvasNP.delete(self.nextPieceImg)
+                self.canvasNP.delete(self.nextPieceImg)
                 self.event = 2
                 self.GAME_TURN()
 
 
         def pieceCanvas(self, id, canvas):
-            global canvasGB
-            canvasGB.create_image(self.imageLocationsGB[canvas], image=self.imagePaths[id-1]['regular'])
+            self.canvasGB.create_image(self.imageLocationsGB[canvas], image=self.imagePaths[id-1]['regular'])
 
         @sio.on('nextPiece')
         def nextpiece_event(data):
             global canvasNP
-            self.nextPiece = Gamestate.Piece(data.id, data.shape, data.color, data.line, data.number)
-            self.nextPiece = Gamestate.Piece(data['id'], data['shape'], data['color'], data['line'], data['number'])
-            self.nextPieceImg = canvasNP.create_image([100,100], image=self.imagePaths[self.nextPiece.id-1]['regular'])
-            self.remainingPieces.remove(self.nextPiece)
-            self.canvasRPhandler("delete", self.nextPiece.id-1)
-            self.event = 1
-            self.turncount +=1
-            self.GAME_TURN()
+            global tictoc
+            tictoc.nextPiece = Gamestate.Piece(data['id'], data['shape'], data['color'], data['line'], data['number'])
+            tictoc.nextPieceImg = canvasNP.create_image([100,100], image=tictoc.imagePaths[tictoc.nextPiece.id-1]['regular'])
+            print(repr(tictoc.remainingPieces))
+            print(repr(tictoc.nextPiece))
+            tictoc.remainingPieces.remove(tictoc.nextPiece)
+            tictoc.canvasRPhandler("delete", tictoc.nextPiece.id-1)
+            tictoc.event = 1
+            tictoc.turncount +=1
+            tictoc.GAME_TURN()
 
         @sio.on('board')
         def board_event(data):
             global canvasNP
+            global tictoc
             column = cont % 4
             row = cont // 4
             column = data % 4
             row = data // 4
-            self.board[row,column] = self.nextPiece
-            if(Game.GAME_ENDED(self.board)==True):
+            tictoc.board[row,column] = tictoc.nextPiece
+            if(Game.GAME_ENDED(tictoc.board)==True):
                     print("ended") #here you can go back and break loop and such
-            self.pieceCanvas(self.nextPiece.id, cont)
-            canvasNP.delete(self.nextPieceImg)
+            tictoc.pieceCanvas(tictoc.nextPiece.id, cont)
+            canvasNP.delete(tictoc.nextPieceImg)
 
         @sio.on('start game')
         def start_event():
@@ -329,7 +335,6 @@ class Gamestate:
         global imagePaths the img folder
         """
         def AIturn(self):
-            global canvasNP
             # Returns moveInfo object
             print(self.nextPiece)
             if(1+self.turncount%2 == 1):
@@ -343,11 +348,11 @@ class Gamestate:
             if(Game.GAME_ENDED(self.board)==True):
                 print("ended") #Do fancy stuff if you wannt to quit
             self.pieceCanvas(self.nextPiece.id, AImove.location[0]*4 + AImove.location[1])
-            canvasNP.delete(self.nextPieceImg)
+            self.canvasNP.delete(self.nextPieceImg)
             for x in range(0,len(self.remainingPieces)):
                 if (self.remainingPieces[x].id == AImove.nextPiece.id):
                     self.nextPiece = self.remainingPieces[x]
-            self.nextPieceImg = canvasNP.create_image([100,100], image=self.imagePaths[self.nextPiece.id - 1]['regular'])
+            self.nextPieceImg = self.canvasNP.create_image([100,100], image=self.imagePaths[self.nextPiece.id - 1]['regular'])
             self.remainingPieces.remove(self.nextPiece)
             self.canvasRPhandler("delete", self.nextPiece.id-1)
             self.turncount += 1
@@ -381,9 +386,8 @@ class Gamestate:
 
     
         def canvasRPhandler(self, action, number):
-            global canvasRP
             if (action == "delete"):
-                canvasRP.delete(self.indexRemainingPieces[number])
+                self.canvasRP.delete(self.indexRemainingPieces[number])
 
     class Piece:
         def __init__(self, id, shape, color, line, number):

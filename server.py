@@ -17,8 +17,7 @@ class gamelobby:
         self.AI1 = AI1
         self.AI2 = AI2
         self.winner = winner
-        # self.room = room
-#fixa bort rooms från transmissions
+
     """
     Translates a gamelobby object into a dictionary, that is returned.
     """
@@ -79,14 +78,20 @@ def disconnect(sid):
 
 @sio.on('nextPiece')
 async def nextpiece_event(sid, data):
-    room=filter(lambda room: room.player1id == sid or room.player2id == sid, roomlist)
-
-    await sio.emit('nextPiece', {'data':data}, room=str(room.player1id), skip_sid=sid)
+    print(repr(data))
+    room = list(filter(lambda room: room.player1id == sid or room.player2id == sid, roomlist))[0]
+    if (room.player1id == room.player2id):
+        await sio.emit('nextPiece', data, room=str(room.player1id))
+    else:
+        await sio.emit('nextPiece', data, room=str(room.player1id), skip_sid=sid)
 
 @sio.on('board')
 async def board_event(sid, data):
-    room=filter(lambda room: room.player1id == sid or room.player2id == sid, roomlist)
-    await sio.emit('board', {'data': data}, room=str(room.player1id), skip_sid=sid)
+    room = list(filter(lambda room: room.player1id == sid or room.player2id == sid, roomlist))[0]
+    if(room.player1id == room.player2id):
+        await sio.emit('board', data, room=str(room.player1id))
+    else:
+        await sio.emit('nextPiece', data, room=str(room.player1id), skip_sid=sid)
 
 @sio.on('create tournament')
 
