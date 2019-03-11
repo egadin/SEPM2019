@@ -13,6 +13,11 @@ import aiohttp
 import asyncio
 import time
 import sys # used when terminating this Python script
+import numpy as np
+import random
+import copy
+from PIL import Image, ImageTk
+from os import path
 
 
 gameList = []
@@ -163,10 +168,11 @@ class Menu:
 
     @sio.on('init game')
     def initgame(data):
+        # data is a dictionary; contains one element, 'data', that is a dictionary
         global menu
         global sio
         menu.menu.destroy()
-        Gamestate(sio, gamelobby.fromDictionary(data))
+        Gamestate(sio, gamelobby.fromDictionary(data['data']))
 
 
 
