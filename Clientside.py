@@ -183,7 +183,7 @@ class Gamestate:
         self.gametk = tk.Frame(root)
         imageLocationsGB, GBheight = Gamestate.initGameScreen(self.gametk)
         imagePaths, imageLocationsRP, indexRemainingPieces = Gamestate.initRPcanvas(self.gametk)
-        terminalIO = IOarea(root, 335, GBheight + 10)
+        terminalIO = Gamestate.IOarea(root, 335, GBheight + 10)
         tictoc = Game(self.lobby.player1, lobby.player2, lobby.AI1, lobby.AI2)
         elf.ametk.bind('<Return>', tictoc.EVENT_HANDLER)
         tictoc.canvasRPhandler("start",1)
