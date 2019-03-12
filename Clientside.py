@@ -227,11 +227,14 @@ class Gamestate:
             # - 2: givePiece
             # - 3: quit
             if (self.event == 2):
+                print('plaer g')
                 self.givePiece()
             elif (self.event == 1):
                 if ((((1 + self.turncount % 2) != 1) and self.player2 == None) or (((1 + self.turncount % 2) == 1) and self.player1 == None)):
+                    print('ai')
                     self.AIturn()
                 else:
+                    print('player l')
                     self.layPiece()
             elif (self.event == 3): #Here you can call you function to go back to the main screen
                 quit
@@ -352,7 +355,6 @@ class Gamestate:
             self.board[AImove.location] = self.nextPiece
             print(AImove)
             self.sio.emit('board', AImove.location[0]*4 + AImove.location[1])
-            self.sio.emit('board', {'data':AImove.location[0]*4 + AImove.location[1]})
             if(tictoc.GAME_ENDED(self.board)==True):
                 print("ended") #Do fancy stuff if you wannt to quit
             self.pieceCanvas(self.nextPiece.id, AImove.location[0]*4 + AImove.location[1])
@@ -364,7 +366,7 @@ class Gamestate:
             self.remainingPieces.remove(self.nextPiece)
             self.canvasRPhandler("delete", self.nextPiece.id-1)
             self.turncount += 1
-            self.sio.emit('nextPiece', self.nextPiece)
+            self.sio.emit('nextPiece', {'id': int(self.nextPiece.id), 'shape': str(self.nextPiece.shape), 'color': str(self.nextPiece.color), 'line': str(self.nextPiece.line), 'number': self.nextPiece.number, 'turn': self.turncount})
 
 
         """
@@ -372,6 +374,7 @@ class Gamestate:
         acting as a stall state while waiting for users input as to which EVENT_HANDLER is called
         """
         def GAME_TURN(self):
+            print('yo')
             if (self.event == 1):
                 #PlayerLabel.config(text='{}'.format(self.player1)) if ((1 + self.turncount % 2) == 1) else PlayerLabel.config(text='{}'.format(self.player2))
                 #InstructionLabel.config(text='Where to place current piece (1-16):')
@@ -458,7 +461,7 @@ class Gamestate:
         def randomLocation(self, board):
             pieces = [(board[i % 4, i // 4], (i % 4, i // 4), i) for i in range(0, 16)]  #creates array for the matrix
             print(pieces)
-            pieces = list(filter(lambda piece, coord, loc: piece is None, pieces))
+            pieces = list(filter(lambda piece: piece[0] is None, pieces))
             print(repr(pieces))
            
             if(pieces!=[]):
@@ -471,6 +474,7 @@ class Gamestate:
             return remainingPiecesCopy[random.randint(0,len(remainingPiecesCopy)-1)]
 
         def alphabeta(self, board, remainingPieces, nextPiece, depth, a, b, maximizingPlayer, turncount):
+            global tictoc
             if (len(remainingPieces)>=15):
                 locInfo = self.randomLocation(board)
                 npInfo = self.randomNP(remainingPieces)
@@ -478,7 +482,7 @@ class Gamestate:
             else:
                 if (remainingPieces == []):
                     return Gamestate.moveInfo(0,None,None,None)
-                elif (Game.GAME_ENDED(board)):
+                elif (tictoc.GAME_ENDED(board)):
                     if (maximizingPlayer):
                         return Gamestate.moveInfo(depth-20, None,None,None)
                     else:
