@@ -684,7 +684,7 @@ class Gamestate:
 
         # Set up icon locations in file system
         imagePaths = [
-            tk.PhotoImage(file = path.dirname(__file__) + '/img/p' + str(i) + '.gif')
+            tk.PhotoImage(file = path.abspath(path.dirname(__file__)) + '/img/p' + str(i) + '.gif')
             for i in range(1, 17)
         ]
 
