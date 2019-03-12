@@ -294,7 +294,8 @@ class Gamestate:
 
 
         def pieceCanvas(self, id, canvas):
-            self.canvasGB.create_image(self.imageLocationsGB[canvas], image=self.imagePaths[id-1]['regular'])
+            new_image = self.canvasGB.create_image(self.imageLocationsGB[canvas], image=self.imagePaths[id-1]['regular'])
+            self.canvasGB.tag_raise(new_image)
 
         @sio.on('nextPiece')
         def nextpiece_event(data):
@@ -626,8 +627,8 @@ class Gamestate:
                 image_y = y * side_step + round(side / 2) + gap
                 imageLocationsGB.append( [image_x, image_y] )
                 # Also place position number on squares
-                lbl = tk.Label(canvasGB, text=str( x + 1 + y * 4), font=("Helvetica", 24, "bold"), fg="dark grey")
-                lbl.place(x=image_x - 25, y=image_y - 25, width=50, height=50)  # center placement
+                canvasGB.create_text(image_x, image_y, anchor = tk.CENTER, fill="dim grey", text=str( x + 1 + y * 4), font=("Helvetica", 24, "bold"))
+                #lbl.place(x=image_x - 25, y=image_y - 25, width=50, height=50)  # center placement
                 # lbl.place(x=(gap + x * side_step + 5), y=(gap + y * side_step) + 5)  # corner placement
 
         return imageLocationsGB
