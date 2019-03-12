@@ -23,6 +23,7 @@ sio = socketio.Client()
 sio.connect('http://localhost:8080')
 
 root = tk.Tk()
+root.title("UU-GAME")
 
 class Menu:
     def __init__(self, sio):
@@ -302,7 +303,9 @@ class Gamestate:
             global canvasNP
             global tictoc
             tictoc.nextPiece = Gamestate.Piece(data['id'], data['shape'], data['color'], data['line'], data['number'])
-            tictoc.nextPieceImg = canvasNP.create_image([100,100], image=tictoc.imagePaths[tictoc.nextPiece.id-1]['regular'])
+            # PP: Changed 'regular' to 'medium' icon size
+            # PP: [100,100] is the wrong position
+            tictoc.nextPieceImg = canvasNP.create_image([100,100], image=tictoc.imagePaths[tictoc.nextPiece.id-1]['medium'])
             print(repr(tictoc.remainingPieces))
             print(repr(tictoc.nextPiece))
             print(tictoc.turncount)
@@ -671,7 +674,7 @@ class Gamestate:
 
         # Icon placement positions (a column)
         x_offset = 80  # x position of images
-        delta_y = 50  # y distance between images (start at 0)
+        delta_y = 55  # y distance between images (start at 0)
 
         # Remaining pieces canvas
         canvasRP = tk.Canvas(root, bg="light grey")
@@ -684,7 +687,7 @@ class Gamestate:
 
         # Set up icon locations in file system
         imagePaths = [
-            tk.PhotoImage(file = path.abspath(path.dirname(__file__)) + '/img/p' + str(i) + '.gif')
+            tk.PhotoImage(file = path.abspath(path.dirname(__file__)) + '/imgClr1/p' + str(i) + '.gif')
             for i in range(1, 17)
         ]
 
