@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 """
-This implements the GUI, the game platform, and the game engine for UU-GAME.
+This implements the welcome page for the UU-GAME game portal.
 
 (c) 2019 SEPM Group G
 """
@@ -12,136 +12,77 @@ import socketio
 import aiohttp
 import asyncio
 import time
-import sys # used when terminating this Python script
+from os import path
 import numpy as np
 import random
 import copy
 from PIL import Image, ImageTk
-from os import path
-
 
 gameList = []
 sio = socketio.Client()
 sio.connect('http://localhost:8080')
 
 root = tk.Tk()
-root.title('UU-GAME')
 
 class Menu:
     def __init__(self, sio):
-        # There is one window, root, that has a frame, menu, drawn on it
-        self.root = root
-        #self.root.geometry("200x350")
         self.menu = tk.Frame(root)
         self.selectedGame = None
         self.sio = sio
-        # Menu header
-        # Welcome text
-        # Player name prompt
-        promptText1 = tk.Label(self.menu, anchor="nw", justify=tk.LEFT, font=('Helvetica', 12), bd=10, text='1. Enter name')
-        promptText1.pack(fill = tk.X)
-        # Player 1 name variable
-        self.player1name = tk.StringVar()
-        # Player 1 name entry field
-        self.player1nameWidget = tk.Entry(self.menu, bg="snow", font=('Helvetica', 14), relief=tk.SUNKEN,
-                                     textvariable=self.player1name)
-        self.player1nameWidget.pack(fill = tk.X)
-        # Action prompt
-        promptText2 = tk.Label(self.menu, anchor="nw", justify=tk.LEFT, font=('Helvetica', 12), bd=10, text='2. Create new or join an existing game')
-        promptText2.pack(fill = tk.X)
-        self.newButton = tk.Button(self.menu, font=('Helvetica', 12),text='New Game', command = self.nbCallback)
-        self.newButton.pack(fill=tk.X)
-        # Listbox with waiting games
-        self.gList = tk.Listbox(self.menu, name='gList', font=('Helvetica', 12))
+        self.gList = tk.Listbox(self.menu, name='gList', height=20, width=40)
         self.gList.bind('<<ListboxSelect>>', self.onselect)
         self.gList.pack(fill=tk.X)
-        #
-        # Request update of gamelbbies here!
-        #
-        self.joinButton = tk.Button(self.menu, font=('Helvetica', 12), text='Join Game', state=tk.DISABLED, command = self.jbCallback)
+        self.newButton = tk.Button(self.menu, text='New Game', command = self.nbCallback)
+        self.newButton.pack(fill=tk.X)
+        self.joinButton = tk.Button(self.menu, text='Join Game', state=tk.DISABLED, command = self.jbCallback)
         self.joinButton.pack(fill=tk.X)
-        self.quitButton = tk.Button(self.menu, font=('Helvetica', 12), text = 'Quit', command = self.quitCallback)
-        self.quitButton.pack(fill = tk.X)
         self.aiOptions = ['Easy','Medium','Hard']
         self.menu.pack(fill=tk.Y)
 
     def onselect(self,evt):
         # Note here that Tkinter passes an event object to onselect()
         w = evt.widget
-        # Check if something is selected
-        if (w.curselection() == ()):
-            self.selectedGame = None
-        else:
-            self.selectedGame = w.curselection()[0]
+        self.selectedGame = w.curselection()[0]
 
     def updateList(self):
         global gameList
-        print("update list", gameList)
-        self.gList.delete(0, len(gameList)-1)
+        print("update list",gameList)
+        self.gList.delete(0,len(gameList)-1)
         if (len(gameList)>0):
             self.joinButton['state']=tk.NORMAL
         for lobby in gameList:
-            self.gList.insert(tk.END, lobby.player1)
+            self.gList.insert(tk.END,lobby.player1)
 
-    # Creates dialog for creating a new game
     def nbCallback(self):
-        # Check if player 1 name is entered
-        if (self.player1nameWidget.get() == ""):
-            # Post error message "Player 1 name may not be empty"
-            messagebox.showerror('Error', 'Player name is missing')
-            # tk.messagebox.showerror(portalScreenTexts[6], portalScreenTexts[8])
-            return
         self.newForm = tk.Toplevel(self.menu)
-        #p1label = tk.Label(self.newForm, text="Player 1 name:")
-        #p1label.pack_configure(fill=tk.X)
-        #p1name = tk.Entry(self.newForm)
-        #p1name.pack_configure(fill=tk.X)
+        p1label = tk.Label(self.newForm, text="Player name:")
+        p1label.pack_configure(fill=tk.X)
+        p1name = tk.Entry(self.newForm)
+        p1name.pack_configure(fill=tk.X)
         var = tk.StringVar(self.newForm)
-        # Prompt
-        promptText = tk.Label(self.newForm, anchor="nw", justify=tk.LEFT, font=('Helvetica', 12), bd=10, text="Select opponent;\n'None' to wait for human or\nlevel of AI opponent")
-        promptText.pack_configure(fill = tk.X)
-        var.set(None) # this is the 'None' alternative
-        #p2label = tk.Label(self.newForm, text="Player 2:")
-        #p2label.pack_configure(fill = tk.X)
+        var.set(None)
+        print(var.get())
+        p2label = tk.Label(self.newForm, text="Player 2:")
+        p2label.pack_configure(fill=tk.X)
         p2select = tk.OptionMenu(self.newForm, var, tuple(self.aiOptions[0]),tuple(self.aiOptions[1]),tuple(self.aiOptions[2]))
         p2select.pack_configure(fill=tk.X)
-        nfsubmit = tk.Button(self.newForm, font=('Helvetica', 12), text='Create Game', command = lambda: self.creategame({'p1name': self.player1nameWidget.get(), 'AI': str(var)}))
+        nfsubmit = tk.Button(self.newForm, text='create game', command = lambda: self.creategame({'p1name': p1name.get(), 'AI': var.get()}))
         nfsubmit.pack_configure()
-        nfcancel = tk.Button(self.newForm, font=('Helvetica', 12), text='Cancel', command = lambda: self.cancelTopwindow(self.newForm))
+        nfcancel = tk.Button(self.newForm, text='cancel', command = lambda: self.cancelTopwindow(newForm))
         nfcancel.pack_configure()
 
     def jbCallback(self):
-        # Check if player 1 name is entered
-        if (self.player1nameWidget.get() == ""):
-            # Post error message "Player 1 name may not be empty"
-            messagebox.showerror('Error', 'Player name is missing')
-            # tk.messagebox.showerror(portalScreenTexts[6], portalScreenTexts[8])
-            return
-        # Join waiting game
-        self.joingame(self.player1nameWidget.get())
-        # Quit dialog here
-        self.cancelTopwindow(self.newForm)
-        """
         self.newForm = tk.Toplevel(self.menu)
-        #p2label = tk.Label(self.newForm, text="Player 1 name:")
-        #p2label.pack_configure(fill=tk.X)
-        #p2name = tk.Entry(self.newForm)
-        #p2name.pack_configure(fill=tk.X)
-        jfsubmit = tk.Button(self.newForm, text='join game', command = lambda: self.joingame(self.player1nameWidget.get()))
-        jfsubmit.pack_configure(fill = tk.X)
-        jfcancel = tk.Button(self.newForm, text='cancel', command = lambda: self.cancelTopwindow(self.newForm))
-        jfcancel.pack_configure(fill = tk.X)
-        """
+        p2label = tk.Label(self.newForm, text="Player name:")
+        p2label.pack_configure(fill=tk.X)
+        p2name = tk.Entry(self.newForm)
+        p2name.pack_configure(fill=tk.X)
+        jfsubmit = tk.Button(self.newForm, text='join game', command = lambda: self.joingame(p2name.get()))
+        jfsubmit.pack_configure()
+        jfcancel = tk.Button(self.newForm, text='cancel', command = lambda: self.cancelTopwindow(newForm))
+        jfcancel.pack_configure()
 
-    # Quits client; disconnect from server, demolish window, and quit
-    def quitCallback(self):
-        sio.disconnect()
-        self.root.destroy()
-        sys.exit()
-
-    # Callback for Create Game button
     def creategame(self,data):
-        # Player 1 is creating a game, but has no ID;
         sio.emit('create gamelobby', {'id': None, 'player1id': None, 'player2id': None, 'player1': data['p1name'], 'player2': None, 'AI1': None, 'AI2': data['AI'], 'winner': None})
         self.newForm.destroy()
 
@@ -152,7 +93,6 @@ class Menu:
 
     def cancelTopwindow(self,data):
         data.destroy()
-
 
     @sio.on('lobby update')
     def lobbyupdate(data):
@@ -165,51 +105,60 @@ class Menu:
         gameList = updatedLobbyList
         menu.updateList()
 
-
     @sio.on('init game')
     def initgame(data):
-        # data is a dictionary; contains one element, 'data', that is a dictionary
         global menu
         global sio
+        menu.gList.unbind('<<ListBoxSelect>>')
         menu.menu.destroy()
-        Gamestate(sio, gamelobby.fromDictionary(data['data']))
-
-
+        print(repr(data))
+        Gamestate(sio, gamelobby.fromDictionary(data))
 
 class Gamestate:
     def __init__(self, sio, lobby):
+        global tictoc
+        global canvasGB, canvasNP, canvasRP
         self.sio = sio
         self.lobby = lobby
-        self.gametk = tk.Frame(root)
-        imageLocationsGB, GBheight = Gamestate.initGameScreen(self.gametk)
-        imagePaths, imageLocationsRP, indexRemainingPieces = Gamestate.initRPcanvas(self.gametk)
-        terminalIO = Gamestate.IOarea(root, 335, GBheight + 10)
-        tictoc = Game(self.lobby.player1, lobby.player2, lobby.AI1, lobby.AI2)
-        elf.ametk.bind('<Return>', tictoc.EVENT_HANDLER)
+        self.gametk = tk.Frame(root, width=1058, height=1058)
+        self.imageLocationsGB, self.GBheight = Gamestate.initGameScreen(self.gametk)
+        self.imagePaths, self.imageLocationsRP, self.indexRemainingPieces = Gamestate.initRPcanvas(self.gametk)
+        self.terminalIO = Gamestate.IOarea(self.gametk, 335, self.GBheight + 10)
+        tictoc = Gamestate.Game(self.lobby.player1, self.lobby.player2, self.lobby.AI1, self.lobby.AI2, self.sio, self.imageLocationsGB,
+        self.GBheight, self.imagePaths, self.imageLocationsRP, self.indexRemainingPieces, self.terminalIO, canvasGB, canvasNP, canvasRP)
         tictoc.canvasRPhandler("start",1)
+        self.gametk.pack()
+        self.gametk.focus_set()
+        self.terminalIO.InstructionEntry.bind('<Return>', tictoc.EVENT_HANDLER)
         tictoc.GAME_TURN()
 
     class Game:
-        def __init__(self, player1, player2, AI1, AI2):
-            global canvasRP # Canvas w remaining pieces
-            global imageLocationsRP
-            global imagePaths
-            global sio
+        def __init__(self, player1, player2, AI1, AI2, sio, imageLocationsGB, GBheight, imagePaths, imageLocationsRP, indexRemainingPieces, terminalIO, canvasGB, canvasNP, canvasRP):
+            self.imageLocationsRP = imageLocationsRP
+            self.imagePaths = imagePaths
+            self.sio = sio
+            self.imageLocationsGB = imageLocationsGB
+            self.GBheight = GBheight
+            self.indexRemainingPieces = indexRemainingPieces
+            self.terminalIO = terminalIO
+            self.canvasGB = canvasGB
+            self.canvasNP = canvasNP
+            self.canvasRP = canvasRP
             # Attributes of the Game class
             # Fills with None of type np.object
             self.board = np.full((4,4), None, dtype = np.object_)
-            self.pieces = [Piece(1,"round","black","dotted",0),Piece(2,"round","black","dotted",1),Piece(3,"round","black","line",0),Piece(4,"round","black","line",1),Piece(5,"round","blue","dotted",0),Piece(6,"round","blue","dotted",1),Piece(7,"round","blue","line",0),Piece(8,"round","blue","line",1),
-            Piece(9,"square","black","dotted",0),Piece(10,"square","black","dotted",1),Piece(11,"square","black","line",0),Piece(12,"square","black","line",1),Piece(13,"square","blue","dotted",0),Piece(14,"square","blue","dotted",1),Piece(15,"square","blue","line",0),Piece(16,"square","blue","line",1)]
+            self.pieces = [Gamestate.Piece(1,"round","black","dotted",0),Gamestate.Piece(2,"round","black","dotted",1),Gamestate.Piece(3,"round","black","line",0),Gamestate.Piece(4,"round","black","line",1),Gamestate.Piece(5,"round","blue","dotted",0),Gamestate.Piece(6,"round","blue","dotted",1),Gamestate.Piece(7,"round","blue","line",0),Gamestate.Piece(8,"round","blue","line",1),
+            Gamestate.Piece(9,"square","black","dotted",0),Gamestate.Piece(10,"square","black","dotted",1),Gamestate.Piece(11,"square","black","line",0),Gamestate.Piece(12,"square","black","line",1),Gamestate.Piece(13,"square","blue","dotted",0),Gamestate.Piece(14,"square","blue","dotted",1),Gamestate.Piece(15,"square","blue","line",0),Gamestate.Piece(16,"square","blue","line",1)]
             self.remainingPieces = self.pieces
             self.nextPiece = None
             self.turncount = 0
             # Next thing for the event handler
             self.event = 2
             # Names of players
-            self.player1 = None
-            self.player2 = None
+            self.player1 = player1
+            self.player2 = player2
             # Inintiates the remaning pieces on the screen
-            self.indexRemainingPieces = [canvasRP.create_image(imageLocationsRP[c], image=imagePaths[c]['small']) for c in range(16)]
+            self.indexRemainingPieces = [canvasRP.create_image(self.imageLocationsRP[c], image=self.imagePaths[c]['small']) for c in range(16)]
             self.nextPieceImg = None
             self.AI1 = AI1
             self.AI2 = AI2
@@ -272,6 +221,7 @@ class Gamestate:
 
 
         def EVENT_HANDLER(self, e):
+            print("tjo event")
             # Event values
             # - 1: layPiece
             # - 2: givePiece
@@ -279,7 +229,7 @@ class Gamestate:
             if (self.event == 2):
                 self.givePiece()
             elif (self.event == 1):
-                if ((((1 + self.turncount % 2) != 1) and self.player2 == None) or ((1 + self.turncount % 2) == 1) and self.player1 == None):
+                if ((((1 + self.turncount % 2) != 1) and self.player2 == None) or (((1 + self.turncount % 2) == 1) and self.player1 == None)):
                     self.AIturn()
                 else:
                     self.layPiece()
@@ -288,25 +238,21 @@ class Gamestate:
 
 
         def givePiece(self):
-            global canvasNP
-            global imagePaths
-            global terminalIO
-
             found = False
             for piece in range(0,16-self.turncount):
                 #if (self.remainingPieces[piece].id == contents.get()):
-                if (self.remainingPieces[piece].id == terminalIO.getInstruction()):
+                if (self.remainingPieces[piece].id == self.terminalIO.getInstruction()):
                     self.nextPiece = self.remainingPieces[piece]  #nextpiece start as (0,0,0,0,0)
                     found = True
-                    self.nextPieceImg = canvasNP.create_image([50,50], image=imagePaths[piece]['medium'])
+                    self.nextPieceImg = self.canvasNP.create_image([50,50], image=self.imagePaths[piece]['medium'])
             if (found == True):
                 self.remainingPieces.remove(self.nextPiece)
                 self.canvasRPhandler("delete", self.nextPiece.id-1)
                 #InstructionEntry.delete(first=0,last=10)
-                terminalIO.clearInstructionEntry()
+                self.terminalIO.clearInstructionEntry()
                 self.turncount += 1
                 self.event = None
-                sio.emit('nextPiece', {'id': int(self.nextPiece.id), 'shape': str(self.nextPiece.shape), 'color': str(self.nextPiece.color), 'line': str(self.nextPiece.line), 'number': self.nextPiece.number})
+                self.sio.emit('nextPiece', {'id': int(self.nextPiece.id), 'shape': str(self.nextPiece.shape), 'color': str(self.nextPiece.color), 'line': str(self.nextPiece.line), 'number': self.nextPiece.number, 'turn': self.turncount})
                 #if (self.player1 == None or self.player2 == None):
                 #   self.AIturn()
             else:
@@ -316,85 +262,81 @@ class Gamestate:
                 else:
                     #InstructionEntry.delete(first=0,last=10)
                     #InstructionLabel.config(text='Nonexisting piece, please choose a piece that is left between 1-16:')
-                    terminalIO.clearInstructionEntry()
-                    terminalIO.updateInstructionLabel("instructionError1")
+                    self.terminalIO.clearInstructionEntry()
+                    self.terminalIO.updateInstructionLabel("instructionError1")
 
         def layPiece(self):
-            global canvasNP
-            global terminalIO
             # User enters 0-16, decrement by 1 to make it -1 to 15
-            cont = terminalIO.getInstruction() - 1
+            cont = self.terminalIO.getInstruction() - 1
             #cont = contents.get() - 1
             column = cont % 4
             row = cont // 4
             if (cont < -1 or cont >= 16 or self.board[row,column] != None):
                 #InstructionEntry.delete(first=0,last=10)
                 #InstructionLabel.config(text='Nonexisting or taken tile please enter free tile between 1-16:')
-                terminalIO.clearInstructionEntry()
-                terminalIO.updateInstructionLabel("instructionError2")
+                self.terminalIO.clearInstructionEntry()
+                self.terminalIO.updateInstructionLabel("instructionError2")
 
             elif (cont == -1):
                 self.event = 3
             else:
                 #InstructionEntry.delete(first=0,last=10)
-                terminalIO.clearInstructionEntry();
-                sio.emit('board', cont)
+                self.terminalIO.clearInstructionEntry()
+                self.sio.emit('board', cont)
                 self.board[row,column] = self.nextPiece
                 if(Game.GAME_ENDED(self.board)==True):
                     print("ended") #here you can go back and break loop and such
                 self.pieceCanvas(self.nextPiece.id, cont)
-                canvasNP.delete(self.nextPieceImg)
+                self.canvasNP.delete(self.nextPieceImg)
                 self.event = 2
                 self.GAME_TURN()
 
 
         def pieceCanvas(self, id, canvas):
-            global canvasGB
-            global imagePaths
-            global imageLocationsGB
-            canvasGB.create_image(imageLocationsGB[canvas], image=imagePaths[id-1]['regular'])
+            self.canvasGB.create_image(self.imageLocationsGB[canvas], image=self.imagePaths[id-1]['regular'])
 
         @sio.on('nextPiece')
         def nextpiece_event(data):
             global canvasNP
-            global imagePaths
-            self.nextPiece = Piece(data.id, data.shape, data.color, data.line, data.number)
-            self.nextPiece = Piece(data['id'], data['shape'], data['color'], data['line'], data['number'])
-            self.nextPieceImg = canvasNP.create_image([100,100], image=imagePaths[self.nextPiece.id-1]['regular'])
-            self.remainingPieces.remove(self.nextPiece)
-            self.canvasRPhandler("delete", self.nextPiece.id-1)
-            self.event = 1
-            self.turncount +=1
-            self.GAME_TURN()
+            global tictoc
+            tictoc.nextPiece = Gamestate.Piece(data['id'], data['shape'], data['color'], data['line'], data['number'])
+            tictoc.nextPieceImg = canvasNP.create_image([100,100], image=tictoc.imagePaths[tictoc.nextPiece.id-1]['regular'])
+            print(repr(tictoc.remainingPieces))
+            print(repr(tictoc.nextPiece))
+            print(tictoc.turncount)
+            if (data['turn']>tictoc.turncount):
+                tictoc.remainingPieces.remove(tictoc.nextPiece)
+                tictoc.canvasRPhandler("delete", tictoc.nextPiece.id-1)
+                tictoc.turncount +=1
+            tictoc.event = 1
+            tictoc.GAME_TURN()
 
         @sio.on('board')
         def board_event(data):
             global canvasNP
-            column = cont % 4
-            row = cont // 4
+            global tictoc
             column = data % 4
             row = data // 4
-            self.board[row,column] = self.nextPiece
-            if(Game.GAME_ENDED(self.board)==True):
+            tictoc.board[row,column] = tictoc.nextPiece
+            if(Game.GAME_ENDED(tictoc.board)==True):
                     print("ended") #here you can go back and break loop and such
-            self.pieceCanvas(self.nextPiece.id, cont)
-            canvasNP.delete(self.nextPieceImg)
+            tictoc.pieceCanvas(tictoc.nextPiece.id, cont)
+            canvasNP.delete(tictoc.nextPieceImg)
 
         @sio.on('start game')
         def start_event():
-            self.event = 1
-            self.GAME_TURN()
+            global tictoc
+            tictoc.event = 1
+            tictoc.GAME_TURN()
 
 
         """
-        Calling the alpha beta AI for coords and a next piece
+        Calling the alpha beta AI for cords and a next piece
         execute a turn without taking inputs and using the info from the AI instead
         global canvasNP box for the next piece
-        global imagePaths point to the img folder
+        global imagePaths the img folder
         """
         def AIturn(self):
-            global canvasNP
-            global imagePaths
             # Returns moveInfo object
             print(self.nextPiece)
             if(1+self.turncount%2 == 1):
@@ -403,20 +345,20 @@ class Gamestate:
                 AImove = self.AI2.makeBestMove(self.board, self.remainingPieces, self.nextPiece, self.turncount) #skickar jag in riktiga eller copierar jag bara?
             print(AImove.location, AImove.score, AImove.nextPiece)
             self.board[AImove.location] = self.nextPiece
-            sio.emit('board', AImove.location[0]*4 + AImove.location[1])
-            sio.emit('board', {'data':AImove.location[0]*4 + AImove.location[1]})
+            self.sio.emit('board', AImove.location[0]*4 + AImove.location[1])
+            self.sio.emit('board', {'data':AImove.location[0]*4 + AImove.location[1]})
             if(Game.GAME_ENDED(self.board)==True):
                 print("ended") #Do fancy stuff if you wannt to quit
             self.pieceCanvas(self.nextPiece.id, AImove.location[0]*4 + AImove.location[1])
-            canvasNP.delete(self.nextPieceImg)
+            self.canvasNP.delete(self.nextPieceImg)
             for x in range(0,len(self.remainingPieces)):
                 if (self.remainingPieces[x].id == AImove.nextPiece.id):
                     self.nextPiece = self.remainingPieces[x]
-            self.nextPieceImg = canvasNP.create_image([100,100], image=imagePaths[self.nextPiece.id - 1]['regular'])
+            self.nextPieceImg = self.canvasNP.create_image([100,100], image=self.imagePaths[self.nextPiece.id - 1]['regular'])
             self.remainingPieces.remove(self.nextPiece)
             self.canvasRPhandler("delete", self.nextPiece.id-1)
             self.turncount += 1
-            sio.emit('nextPiece', self.nextPiece)
+            self.sio.emit('nextPiece', self.nextPiece)
 
 
         """
@@ -424,32 +366,30 @@ class Gamestate:
         acting as a stall state while waiting for users input as to which EVENT_HANDLER is called
         """
         def GAME_TURN(self):
-            global terminalIO # class for handling player IO
             if (self.event == 1):
                 #PlayerLabel.config(text='{}'.format(self.player1)) if ((1 + self.turncount % 2) == 1) else PlayerLabel.config(text='{}'.format(self.player2))
                 #InstructionLabel.config(text='Where to place current piece (1-16):')
                 if ((1 + self.turncount % 2) == 1):
-                    terminalIO.updatePlayerLabel(self.player1)
+                    self.terminalIO.updatePlayerLabel(self.player1)
                 else:
-                    terminalIO.updatePlayerLabel(self.player2)
+                    self.terminalIO.updatePlayerLabel(self.player2)
 
-                terminalIO.updateInstructionLabel("instructionPlace1")
+                self.terminalIO.updateInstructionLabel("instructionPlace1")
 
             elif (self.event == 2):
                 #PlayerLabel.config(text='{}'.format(self.player1)) if ((1 + self.turncount % 2) == 1) else PlayerLabel.config(text='{}'.format(self.player2))
                 #InstructionLabel.config(text='Number of piece to give away (1-16):')
                 if ((1 + self.turncount % 2) == 1):
-                    terminalIO.updatePlayerLabel(self.player1)
+                    self.terminalIO.updatePlayerLabel(self.player1)
                 else:
-                    terminalIO.updatePlayerLabel(self.player2)
+                    self.terminalIO.updatePlayerLabel(self.player2)
 
-                terminalIO.updateInstructionLabel("instructionSelect2")
+                self.terminalIO.updateInstructionLabel("instructionSelect2")
 
 
-            def canvasRPhandler(self, action, number):
-                global canvasRP
-                if (action == "delete"):
-                    canvasRP.delete(self.indexRemainingPieces[number])
+        def canvasRPhandler(self, action, number):
+            if (action == "delete"):
+                self.canvasRP.delete(self.indexRemainingPieces[number])
 
     class Piece:
         def __init__(self, id, shape, color, line, number):
@@ -470,7 +410,6 @@ class Gamestate:
             rand = random.randint(1,11)
             boardCopy = copy.deepcopy(board)
 
-            # level determines the cutoff for when to do random and when to do optimal moves
             level = {
                 "easy" : 1,
                 "medium" : 3,
@@ -484,7 +423,7 @@ class Gamestate:
             else:
                 return self.alphabeta(boardCopy, remainingPieces, nextPiece, 0, float('-inf'), float('inf'), True, turncount)
 
-            """
+
             if (self.difficulty == "easy"):
                 if (rand > 1):
                     locInfo = self.randomLocation(board)
@@ -508,7 +447,7 @@ class Gamestate:
                     return moveInfo(0, locInfo[0], locInfo[1], npInfo)
                 else:
                     return self.alphabeta(boardCopy, remainingPieces, nextPiece, 0, float('-inf'), float('inf'), True, turncount)
-            """
+
         def randomLocation(self, board):
             pieces = [(board[i % 4, i // 4], (i % 4, i // 4), i) for i in range(0, 15)]  #creates array for the matrix
             pieces = filter(lambda piece, coord, loc: piece is None, pieces)
@@ -628,19 +567,19 @@ class Gamestate:
                 }
 
             # Prompt for player (player 1 or 2)
-            PlayerLabel = tk.Label(root, text="Player 1", font=('Helvetica', 14))
+            PlayerLabel = tk.Label(root, text="Player 1", font=("Helvetica", 14))
             PlayerLabel.place(x = x_start, y = (y_start + 25))
             self.PlayerLabel = PlayerLabel
 
             # Instructions to player
-            InstructionLabel = tk.Label(root, text=self.outputTexts["instructionSelect1"], font=('Helvetica', 14), anchor="w")
+            InstructionLabel = tk.Label(root, text=self.outputTexts["instructionSelect1"], font=("Helvetica", 14), anchor="w")
             InstructionLabel.place(x=x_start, y=(y_start + 57))
             self.InstructionLabel = InstructionLabel
             contents = tk.IntVar()
             self.contents = contents
 
             # Players entry field
-            InstructionEntry = tk.Entry(root, bd = 5, textvariable=contents, bg="snow", relief=tk.SUNKEN, font=('Helvetica', 14))
+            InstructionEntry = tk.Entry(root, bd = 5, textvariable=contents, bg="snow", relief=tk.SUNKEN, font=("Helvetica", 14))
             InstructionEntry.place(x=x_start, y=(y_start + 95))
             self.InstructionEntry = InstructionEntry
 
@@ -648,7 +587,7 @@ class Gamestate:
             self.clearInstructionEntry()
 
         # Used to prompt the next player with the name
-        def updatePlayerLabel(self, txt):
+        def updatePlayerLabel(self,txt):
             self.PlayerLabel.config(text=txt)
 
         # Used to prompt the player with next action (select/place)
@@ -660,7 +599,7 @@ class Gamestate:
         def getInstruction(self):
             return int(self.contents.get())
 
-        # Clears the command entered by the player
+        # Clears the commend entered by the player
         def clearInstructionEntry(self):
             self.InstructionEntry.delete(first=0,last=10)
 
@@ -686,7 +625,7 @@ class Gamestate:
                 image_y = y * side_step + round(side / 2) + gap
                 imageLocationsGB.append( [image_x, image_y] )
                 # Also place position number on squares
-                lbl = tk.Label(canvasGB, text=str( x + 1 + y * 4), font=('Helvetica', 24, "bold"), fg="dark grey")
+                lbl = tk.Label(canvasGB, text=str( x + 1 + y * 4), font=("Helvetica", 24, "bold"), fg="dark grey")
                 lbl.place(x=image_x - 25, y=image_y - 25, width=50, height=50)  # center placement
                 # lbl.place(x=(gap + x * side_step + 5), y=(gap + y * side_step) + 5)  # corner placement
 
@@ -763,7 +702,7 @@ class Gamestate:
         # Draw icons in imageLocationsRP on canvas
         for c in range(16):
             indexRemainingPieces.append(canvasRP.create_image(imageLocationsRP[c], image=imagePaths[c]['tiny']))
-            lbl = tk.Label(canvasRP, text=str(c + 1), font=('Helvetica', 14), anchor="center", bg="light grey", fg="dim grey")
+            lbl = tk.Label(canvasRP, text=str(c + 1), font=("Helvetica", 14), anchor="center", bg="light grey", fg="dim grey")
             lbl.place(x=10, y=imageLocationsRP[c][1] - 25, width=30, height=50)
 
         return imagePaths, imageLocationsRP, indexRemainingPieces
