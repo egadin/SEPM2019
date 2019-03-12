@@ -256,7 +256,7 @@ class Gamestate:
                 #if (self.player1 == None or self.player2 == None):
                 #   self.AIturn()
             else:
-                if (terminalIO.getInstruction() == 0):
+                if (self.terminalIO.getInstruction() == 0):
                 #if (contents.get() == 0):
                     self.event = 3
                 else:
@@ -267,6 +267,7 @@ class Gamestate:
 
         def layPiece(self):
             # User enters 0-16, decrement by 1 to make it -1 to 15
+            global tictoc
             cont = self.terminalIO.getInstruction() - 1
             #cont = contents.get() - 1
             column = cont % 4
@@ -284,7 +285,7 @@ class Gamestate:
                 self.terminalIO.clearInstructionEntry()
                 self.sio.emit('board', cont)
                 self.board[row,column] = self.nextPiece
-                if(Game.GAME_ENDED(self.board)==True):
+                if(tictoc.GAME_ENDED(self.board)==True):
                     print("ended") #here you can go back and break loop and such
                 self.pieceCanvas(self.nextPiece.id, cont)
                 self.canvasNP.delete(self.nextPieceImg)
@@ -318,9 +319,9 @@ class Gamestate:
             column = data % 4
             row = data // 4
             tictoc.board[row,column] = tictoc.nextPiece
-            if(Game.GAME_ENDED(tictoc.board)==True):
+            if(tictoc.GAME_ENDED(tictoc.board)==True):
                     print("ended") #here you can go back and break loop and such
-            tictoc.pieceCanvas(tictoc.nextPiece.id, cont)
+            tictoc.pieceCanvas(tictoc.nextPiece.id, data)
             canvasNP.delete(tictoc.nextPieceImg)
 
         @sio.on('start game')
