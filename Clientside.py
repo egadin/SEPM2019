@@ -84,8 +84,8 @@ class Menu:
         jfcancel.pack_configure()
 
     def creategame(self,data):
-        sio.emit('create gamelobby', {'id': None, 'player1id': None, 'player2id': None, 'player1': data['p1name'], 'player2': None, 'AI1': None, 'AI2': data['AI'], 'winner': None})
         self.newForm.destroy()
+        sio.emit('create gamelobby', {'id': None, 'player1id': None, 'player2id': None, 'player1': data['p1name'], 'player2': None, 'AI1': None, 'AI2': data['AI'], 'winner': None})
 
     def joingame(self, data):
         global gameList
@@ -161,8 +161,8 @@ class Gamestate:
             # Inintiates the remaning pieces on the screen
             self.indexRemainingPieces = [canvasRP.create_image(self.imageLocationsRP[c], image=self.imagePaths[c]['small']) for c in range(16)]
             self.nextPieceImg = None
-            self.AI1 = AI1
-            self.AI2 = AI2
+            self.AI1 = Gamestate.AI((AI1)) if ((AI1!='None') and (AI1!=None)) else None
+            self.AI2 = Gamestate.AI((AI2)) if ((AI2!='None') and (AI2!=None)) else None
 
 
         @staticmethod
@@ -228,11 +228,14 @@ class Gamestate:
             # - 2: givePiece
             # - 3: quit
             if (self.event == 2):
+                print('plaer g')
                 self.givePiece()
             elif (self.event == 1):
                 if ((((1 + self.turncount % 2) != 1) and self.player2 == None) or (((1 + self.turncount % 2) == 1) and self.player1 == None)):
+                    print('ai')
                     self.AIturn()
                 else:
+                    print('player l')
                     self.layPiece()
             elif (self.event == 3): #Here you can call you function to go back to the main screen
                 quit
@@ -253,9 +256,10 @@ class Gamestate:
                 self.terminalIO.clearInstructionEntry()
                 self.turncount += 1
                 self.event = None
-                self.sio.emit('nextPiece', {'id': int(self.nextPiece.id), 'shape': str(self.nextPiece.shape), 'color': str(self.nextPiece.color), 'line': str(self.nextPiece.line), 'number': self.nextPiece.number, 'turn': self.turncount})
-                #if (self.player1 == None or self.player2 == None):
-                #   self.AIturn()
+                if ((self.AI1 == None) and (self.AI2 == None)):
+                    self.sio.emit('nextPiece', {'id': int(self.nextPiece.id), 'shape': str(self.nextPiece.shape), 'color': str(self.nextPiece.color), 'line': str(self.nextPiece.line), 'number': self.nextPiece.number, 'turn': self.turncount})
+                else:
+                    self.AIturn()
             else:
                 if (self.terminalIO.getInstruction() == 0):
                 #if (contents.get() == 0):
@@ -284,7 +288,8 @@ class Gamestate:
             else:
                 #InstructionEntry.delete(first=0,last=10)
                 self.terminalIO.clearInstructionEntry()
-                self.sio.emit('board', cont)
+                if ((self.AI1 == None) and (self.AI2 == None)):
+                    self.sio.emit('board', cont)
                 self.board[row,column] = self.nextPiece
                 if(tictoc.GAME_ENDED(self.board)==True):
                     print("ended") #here you can go back and break loop and such
@@ -342,7 +347,8 @@ class Gamestate:
         global imagePaths the img folder
         """
         def AIturn(self):
-            # Returns moveInfo object
+            # Returns Gamestate.moveInfo object
+            global tictoc
             print(self.nextPiece)
             if(1+self.turncount%2 == 1):
                 AImove = self.AI1.makeBestMove(self.board, self.remainingPieces, self.nextPiece, self.turncount) #skickar jag in riktiga eller copierar jag bara?
@@ -350,9 +356,9 @@ class Gamestate:
                 AImove = self.AI2.makeBestMove(self.board, self.remainingPieces, self.nextPiece, self.turncount) #skickar jag in riktiga eller copierar jag bara?
             print(AImove.location, AImove.score, AImove.nextPiece)
             self.board[AImove.location] = self.nextPiece
+            print(AImove)
             self.sio.emit('board', AImove.location[0]*4 + AImove.location[1])
-            self.sio.emit('board', {'data':AImove.location[0]*4 + AImove.location[1]})
-            if(Game.GAME_ENDED(self.board)==True):
+            if(tictoc.GAME_ENDED(self.board)==True):
                 print("ended") #Do fancy stuff if you wannt to quit
             self.pieceCanvas(self.nextPiece.id, AImove.location[0]*4 + AImove.location[1])
             self.canvasNP.delete(self.nextPieceImg)
@@ -363,7 +369,7 @@ class Gamestate:
             self.remainingPieces.remove(self.nextPiece)
             self.canvasRPhandler("delete", self.nextPiece.id-1)
             self.turncount += 1
-            self.sio.emit('nextPiece', self.nextPiece)
+            self.sio.emit('nextPiece', {'id': int(self.nextPiece.id), 'shape': str(self.nextPiece.shape), 'color': str(self.nextPiece.color), 'line': str(self.nextPiece.line), 'number': self.nextPiece.number, 'turn': self.turncount})
 
 
         """
@@ -371,6 +377,7 @@ class Gamestate:
         acting as a stall state while waiting for users input as to which EVENT_HANDLER is called
         """
         def GAME_TURN(self):
+            print('yo')
             if (self.event == 1):
                 #PlayerLabel.config(text='{}'.format(self.player1)) if ((1 + self.turncount % 2) == 1) else PlayerLabel.config(text='{}'.format(self.player2))
                 #InstructionLabel.config(text='Where to place current piece (1-16):')
@@ -409,22 +416,23 @@ class Gamestate:
 
     class AI():
         def __init__(self, difficulty):
-            self.difficulty = difficulty
+            self.difficulty = difficulty.replace('(','').replace(')','').replace('\'','')
+            self.difficulty = self.difficulty.replace(',','').replace(' ','')
 
         def makeBestMove(self, board, remainingPieces, nextPiece, turncount):
             rand = random.randint(1,11)
             boardCopy = copy.deepcopy(board)
 
             level = {
-                "easy" : 1,
-                "medium" : 3,
-                "hard" : 7
+                "Easy" : 1,
+                "Medium" : 3,
+                "Hard" : 7
             }
 
             if (rand > level[self.difficulty]):
                 locInfo = self.randomLocation(board)
                 npInfo = self.randomNP(remainingPieces)
-                return moveInfo(0, locInfo[0], locInfo[1], npInfo)
+                return Gamestate.moveInfo(0, locInfo[0], locInfo[1], npInfo)
             else:
                 return self.alphabeta(boardCopy, remainingPieces, nextPiece, 0, float('-inf'), float('inf'), True, turncount)
 
@@ -433,7 +441,7 @@ class Gamestate:
                 if (rand > 1):
                     locInfo = self.randomLocation(board)
                     npInfo = self.randomNP(remainingPieces)
-                    return moveInfo(0, locInfo[0], locInfo[1], npInfo)
+                    return Gamestate.moveInfo(0, locInfo[0], locInfo[1], npInfo)
                 else:
                     return self.alphabeta(boardCopy, remainingPieces, nextPiece, 0, float('-inf'), float('inf'), True, turncount)
 
@@ -441,7 +449,7 @@ class Gamestate:
                 if (rand > 3):
                     locInfo = self.randomLocation(board)
                     npInfo = self.randomNP(remainingPieces)
-                    return moveInfo(0, locInfo[0], locInfo[1], npInfo)
+                    return Gamestate.moveInfo(0, locInfo[0], locInfo[1], npInfo)
                 else:
                     return self.alphabeta(boardCopy, remainingPieces, nextPiece, 0, float('-inf'), float('inf'), True, turncount)
 
@@ -449,14 +457,22 @@ class Gamestate:
                 if (rand > 7):
                     locInfo = self.randomLocation(board)
                     npInfo = self.randomNP(remainingPieces)
-                    return moveInfo(0, locInfo[0], locInfo[1], npInfo)
+                    return Gamestate.moveInfo(0, locInfo[0], locInfo[1], npInfo)
                 else:
                     return self.alphabeta(boardCopy, remainingPieces, nextPiece, 0, float('-inf'), float('inf'), True, turncount)
 
         def randomLocation(self, board):
+<<<<<<< HEAD
             pieces = [(board[i % 4, i // 4], (i % 4, i // 4), i) for i in range(0, 15)]  #creates array for the matrix
             pieces = filter(lambda piece, coord, loc: piece is None, pieces)
 
+=======
+            pieces = [(board[i % 4, i // 4], (i % 4, i // 4), i) for i in range(0, 16)]  #creates array for the matrix
+            print(pieces)
+            pieces = list(filter(lambda piece: piece[0] is None, pieces))
+            print(repr(pieces))
+           
+>>>>>>> 0d61fde094d0b4c0f5bc6df823a9ee73539a1263
             if(pieces!=[]):
                 piece = random.choice(pieces)
                 return (piece[1], piece[2])
@@ -467,25 +483,26 @@ class Gamestate:
             return remainingPiecesCopy[random.randint(0,len(remainingPiecesCopy)-1)]
 
         def alphabeta(self, board, remainingPieces, nextPiece, depth, a, b, maximizingPlayer, turncount):
+            global tictoc
             if (len(remainingPieces)>=15):
                 locInfo = self.randomLocation(board)
                 npInfo = self.randomNP(remainingPieces)
-                return moveInfo(0, locInfo[0], locInfo[1], npInfo)
+                return Gamestate.moveInfo(0, locInfo[0], locInfo[1], npInfo)
             else:
                 if (remainingPieces == []):
-                    return moveInfo(0,None,None,None)
-                elif (Game.GAME_ENDED(board)):
+                    return Gamestate.moveInfo(0,None,None,None)
+                elif (tictoc.GAME_ENDED(board)):
                     if (maximizingPlayer):
-                        return moveInfo(depth-20, None,None,None)
+                        return Gamestate.moveInfo(depth-20, None,None,None)
                     else:
-                        return moveInfo(20-depth,None,None,None)
+                        return Gamestate.moveInfo(20-depth,None,None,None)
                 elif (depth > (2 if turncount < 6 else 3)):
                     locInfo = self.randomLocation(board)
                     npInfo = self.randomNP(remainingPieces)
-                return moveInfo(0, locInfo[0], locInfo[1], npInfo)
+                return Gamestate.moveInfo(0, locInfo[0], locInfo[1], npInfo)
 
                 if (maximizingPlayer):
-                    value = moveInfo(float('-inf'),None,None,None)
+                    value = Gamestate.moveInfo(float('-inf'),None,None,None)
                     boardCopy = copy.deepcopy(board)
                     for i in range(len(boardCopy)):
                         for j in range(len(boardCopy[i])):
@@ -514,7 +531,7 @@ class Gamestate:
                                 boardCopy[i,j] = None
                     return value
                 else:
-                    value = moveInfo(float('inf'),None,None,None)
+                    value = Gamestate.moveInfo(float('inf'),None,None,None)
                     boardCopy = copy.deepcopy(board)
                     for i in range(len(boardCopy)):
                         for j in range(len(boardCopy[i])):

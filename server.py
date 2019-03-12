@@ -63,8 +63,8 @@ class gamelobby:
         return self.getPlayer2Name()
 
 class Room:
-    def __init__(self, id, p1, p2):
-        self.id = id
+    def __init__(self, sid, p1, p2):
+        self.id = sid
         self.player1id = p1
         self.player2id = p2
 
@@ -80,8 +80,11 @@ def disconnect(sid):
 @sio.on('nextPiece')
 async def nextpiece_event(sid, data):
     print(repr(data))
+    global roomlist
+    print(roomlist[0].id, roomlist[0].player1id)
     room = list(filter(lambda room: room.player1id == sid or room.player2id == sid, roomlist))[0]
-    if (room.player1id == room.player2id):
+    print(room)
+    if ((room.player1id == room.player2id) or room.player2id == None):
         await sio.emit('nextPiece', data, room=str(room.id))
     else:
         await sio.emit('nextPiece', data, room=str(room.id), skip_sid=sid)
@@ -110,9 +113,9 @@ async def creategame_event(sid, data):
     global gamelist
     print(type(data['AI2']))
     if (data['AI2']!='None'):
-        newroom=Room(data['id'], data['player1id'], data['player2id'])
+        newroom=Room(sid, sid, data['player2id'])
         roomlist.append(newroom)
-        sio.enter_room(data['player1id'], str(data['id']))
+        sio.enter_room(sid, str(sid))
         currentgame = gamelobby(sid, sid, data['player2id'], data['player1'], data['player2'], data['AI1'], data['AI2'] , data['winner'])
         await sio.emit('init game', data=gamelobby.toDictionary(currentgame), room=str(currentgame.id))
         await sio.emit('start game', room=str(currentgame.id))
@@ -159,14 +162,13 @@ async def startgame_event(sid):
     gamelist.remove(currentgame)
     newroom=Room(currentgame.id, currentgame.player1id, currentgame.player2id)
     roomlist.append(newroom)
-    sio.enter_room(currentgame.player1id, str(currentgame.player1id))
-    sio.enter_room(currentgame.player2id, str(currentgame.player1id))
+    sio.enter_room(currentgame.player1id, str(currentgame.id))
+    sio.enter_room(currentgame.player2id, str(currentgame.id))
     await sio.emit('init game', data=gamelobby.toDictionary(currentgame), room=str(currentgame.id))
-    await sio.emit('start game', room=str(currentgame.player1id), skip_sid=currentgame.id)
+    await sio.emit('start game', room=str(currentgame.id), skip_sid=currentgame.id)
 """
 fix data outputs to dict
 """
 
 if __name__ == '__main__':
     web.run_app(app)
-0
