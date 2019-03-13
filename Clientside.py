@@ -126,7 +126,7 @@ class Gamestate:
         self.imagePaths, self.imageLocationsRP, self.indexRemainingPieces = Gamestate.initRPcanvas(self.gametk)
         self.terminalIO = Gamestate.IOarea(self.gametk, 335, self.GBheight + 10)
         tictoc = Gamestate.Game(self.lobby.player1, self.lobby.player2, self.lobby.AI1, self.lobby.AI2, self.sio, self.imageLocationsGB,
-        self.GBheight, self.imagePaths, self.imageLocationsRP, self.indexRemainingPieces, self.terminalIO, canvasGB, canvasNP, canvasRP)
+                                self.GBheight, self.imagePaths, self.imageLocationsRP, self.indexRemainingPieces, self.terminalIO, canvasGB, canvasNP, canvasRP)
         tictoc.canvasRPhandler("start",1)
         self.gametk.pack()
         self.gametk.focus_set()
@@ -134,7 +134,8 @@ class Gamestate:
         tictoc.GAME_TURN()
 
     class Game:
-        def __init__(self, player1, player2, AI1, AI2, sio, imageLocationsGB, GBheight, imagePaths, imageLocationsRP, indexRemainingPieces, terminalIO, canvasGB, canvasNP, canvasRP):
+        def __init__(self, player1, player2, AI1, AI2, sio, imageLocationsGB, GBheight, imagePaths, imageLocationsRP, indexRemainingPieces, terminalIO,
+                    canvasGB, canvasNP, canvasRP):
             self.imageLocationsRP = imageLocationsRP
             self.imagePaths = imagePaths
             self.sio = sio
@@ -249,6 +250,7 @@ class Gamestate:
                     self.nextPiece = self.remainingPieces[piece]  #nextpiece start as (0,0,0,0,0)
                     found = True
                     self.nextPieceImg = self.canvasNP.create_image([50,50], image=self.imagePaths[piece]['medium'])
+                    # PP: exit loop here?
             if (found == True):
                 self.remainingPieces.remove(self.nextPiece)
                 self.canvasRPhandler("delete", self.nextPiece.id-1)
@@ -310,10 +312,10 @@ class Gamestate:
             tictoc.nextPiece = Gamestate.Piece(data['id'], data['shape'], data['color'], data['line'], data['number'])
             # PP: Changed 'regular' to 'medium' icon size
             # PP: [100,100] is the wrong position
-            tictoc.nextPieceImg = canvasNP.create_image([100,100], image=tictoc.imagePaths[tictoc.nextPiece.id-1]['medium'])
-            print(repr(tictoc.remainingPieces))
-            print(repr(tictoc.nextPiece))
-            print(tictoc.turncount)
+            #tictoc.nextPieceImg = canvasNP.create_image([100,100], image=tictoc.imagePaths[tictoc.nextPiece.id-1]['medium'])
+            print("nextpiece_event called; has these remaining pieces: "+repr(tictoc.remainingPieces))
+            print("nextpiece_event has next "+repr(tictoc.nextPiece))
+            print("nextpiece_event turncount: "+str(tictoc.turncount))
             if (data['turn']>tictoc.turncount):
                 tictoc.remainingPieces.remove(tictoc.nextPiece)
                 tictoc.canvasRPhandler("delete", tictoc.nextPiece.id-1)
@@ -331,7 +333,8 @@ class Gamestate:
             if(tictoc.GAME_ENDED(tictoc.board)==True):
                     print("ended") #here you can go back and break loop and such
             tictoc.pieceCanvas(tictoc.nextPiece.id, data)
-            canvasNP.delete(tictoc.nextPieceImg)
+            print("board_event did't delete nextPiece.")
+            #canvasNP.delete(tictoc.nextPieceImg)
 
         @sio.on('start game')
         def start_event():
@@ -365,7 +368,8 @@ class Gamestate:
             for x in range(0,len(self.remainingPieces)):
                 if (self.remainingPieces[x].id == AImove.nextPiece.id):
                     self.nextPiece = self.remainingPieces[x]
-            self.nextPieceImg = self.canvasNP.create_image([100,100], image=self.imagePaths[self.nextPiece.id - 1]['regular'])
+            # PP: changed position to 50,50 and size to 'medium'
+            self.nextPieceImg = self.canvasNP.create_image([50,50], image=self.imagePaths[self.nextPiece.id - 1]['medium'])
             self.remainingPieces.remove(self.nextPiece)
             self.canvasRPhandler("delete", self.nextPiece.id-1)
             self.turncount += 1
@@ -377,7 +381,7 @@ class Gamestate:
         acting as a stall state while waiting for users input as to which EVENT_HANDLER is called
         """
         def GAME_TURN(self):
-            print('yo')
+            print('GAME_TURN starts and says: yo')
             if (self.event == 1):
                 #PlayerLabel.config(text='{}'.format(self.player1)) if ((1 + self.turncount % 2) == 1) else PlayerLabel.config(text='{}'.format(self.player2))
                 #InstructionLabel.config(text='Where to place current piece (1-16):')
@@ -462,17 +466,10 @@ class Gamestate:
                     return self.alphabeta(boardCopy, remainingPieces, nextPiece, 0, float('-inf'), float('inf'), True, turncount)
 
         def randomLocation(self, board):
-<<<<<<< HEAD
-            pieces = [(board[i % 4, i // 4], (i % 4, i // 4), i) for i in range(0, 15)]  #creates array for the matrix
-            pieces = filter(lambda piece, coord, loc: piece is None, pieces)
-
-=======
             pieces = [(board[i % 4, i // 4], (i % 4, i // 4), i) for i in range(0, 16)]  #creates array for the matrix
             print(pieces)
             pieces = list(filter(lambda piece: piece[0] is None, pieces))
             print(repr(pieces))
-           
->>>>>>> 0d61fde094d0b4c0f5bc6df823a9ee73539a1263
             if(pieces!=[]):
                 piece = random.choice(pieces)
                 return (piece[1], piece[2])
@@ -603,6 +600,7 @@ class Gamestate:
             # Players entry field
             InstructionEntry = tk.Entry(root, bd = 5, textvariable=contents, bg="snow", relief=tk.SUNKEN, font=("Helvetica", 14))
             InstructionEntry.place(x=x_start, y=(y_start + 95))
+            InstructionEntry.focus_set()
             self.InstructionEntry = InstructionEntry
 
             # Clear entry
@@ -713,8 +711,8 @@ class Gamestate:
             {
                 "regular": image,
                 "medium" : image.subsample(2),
-                "small": image.subsample(3),
-                "tiny" : image.subsample(4)
+                "small"  : image.subsample(3),
+                "tiny"   : image.subsample(4)
             }
             for image in imagePaths
         ]
