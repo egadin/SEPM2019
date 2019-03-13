@@ -23,7 +23,7 @@ sio = socketio.Client()
 sio.connect('http://localhost:8080')
 
 root = tk.Tk()
-root.title("UU-Game")
+root.title("UU-GAME")
 
 class Menu:
     def __init__(self, sio):
@@ -44,7 +44,7 @@ class Menu:
         # Note here that Tkinter passes an event object to onselect()
         w = evt.widget
         self.selectedGame = w.curselection()[0]
-   
+
     def updateList(self):
         global gameList
         #print("update list",gameList)
@@ -54,7 +54,7 @@ class Menu:
         for lobby in gameList:
             self.gList.insert(tk.END,lobby.player1)
 
-    def nbCallback(self): 
+    def nbCallback(self):
         self.newForm = tk.Toplevel(self.menu)
         p1label = tk.Label(self.newForm, text="Player name:")
         p1label.pack_configure(fill=tk.X)
@@ -72,7 +72,7 @@ class Menu:
         nfcancel = tk.Button(self.newForm, text='cancel', command = lambda: self.cancelTopwindow(newForm))
         nfcancel.pack_configure()
 
-    def jbCallback(self): 
+    def jbCallback(self):
         self.newForm = tk.Toplevel(self.menu)
         p2label = tk.Label(self.newForm, text="Player name:")
         p2label.pack_configure(fill=tk.X)
@@ -82,7 +82,7 @@ class Menu:
         jfsubmit.pack_configure()
         jfcancel = tk.Button(self.newForm, text='cancel', command = lambda: self.cancelTopwindow(newForm))
         jfcancel.pack_configure()
-    
+
     def creategame(self,data):
         self.newForm.destroy()
         sio.emit('create gamelobby', {'id': None, 'player1id': None, 'player2id': None, 'player1': data['p1name'], 'player2': None, 'AI1': None, 'AI2': data['AI'], 'winner': None})
@@ -126,17 +126,18 @@ class Gamestate:
         self.imagePaths, self.imageLocationsRP, self.indexRemainingPieces = Gamestate.initRPcanvas(self.gametk)
         self.terminalIO = Gamestate.IOarea(self.gametk, 335, self.GBheight + 10)
         tictoc = Gamestate.Game(self.lobby.player1, self.lobby.player2, self.lobby.AI1, self.lobby.AI2, self.sio, self.imageLocationsGB,
-        self.GBheight, self.imagePaths, self.imageLocationsRP, self.indexRemainingPieces, self.terminalIO, canvasGB, canvasNP, canvasRP)
+                                self.GBheight, self.imagePaths, self.imageLocationsRP, self.indexRemainingPieces, self.terminalIO, canvasGB, canvasNP, canvasRP)
         tictoc.canvasRPhandler("start",1)
         self.gametk.pack()
         self.gametk.focus_set()
         self.terminalIO.InstructionEntry.bind('<Return>', tictoc.EVENT_HANDLER)
-        tictoc.GAME_TURN() 
+        tictoc.GAME_TURN()
 
     class Game:
-        def __init__(self, player1, player2, AI1, AI2, sio, imageLocationsGB, GBheight, imagePaths, imageLocationsRP, indexRemainingPieces, terminalIO, canvasGB, canvasNP, canvasRP):
+        def __init__(self, player1, player2, AI1, AI2, sio, imageLocationsGB, GBheight, imagePaths, imageLocationsRP, indexRemainingPieces, terminalIO,
+                    canvasGB, canvasNP, canvasRP):
             self.imageLocationsRP = imageLocationsRP
-            self.imagePaths = imagePaths 
+            self.imagePaths = imagePaths
             self.sio = sio
             self.imageLocationsGB = imageLocationsGB
             self.GBheight = GBheight
@@ -250,6 +251,7 @@ class Gamestate:
                     self.nextPiece = self.remainingPieces[piece]  #nextpiece start as (0,0,0,0,0)
                     found = True
                     self.nextPieceImg = self.canvasNP.create_image([50,50], image=self.imagePaths[piece]['medium'])
+                    # PP: exit loop here?
             if (found == True):
                 self.remainingPieces.remove(self.nextPiece)
                 self.canvasRPhandler("delete", self.nextPiece.id-1)
@@ -330,7 +332,8 @@ class Gamestate:
             if(tictoc.GAME_ENDED(tictoc.board)==True):
                     print("ended") #here you can go back and break loop and such
             tictoc.pieceCanvas(tictoc.nextPiece.id, data)
-            canvasNP.delete(tictoc.nextPieceImg)
+            #print("board_event did't delete nextPiece.")
+            #canvasNP.delete(tictoc.nextPieceImg)
 
         @sio.on('start game')
         def start_event():
@@ -338,7 +341,7 @@ class Gamestate:
             tictoc.event = 1
             tictoc.GAME_TURN()
 
-        
+
         """
         Calling the alpha beta AI for cords and a next piece
         execute a turn without taking inputs and using the info from the AI instead
@@ -397,7 +400,7 @@ class Gamestate:
 
                 self.terminalIO.updateInstructionLabel("instructionSelect2")
 
-    
+
         def canvasRPhandler(self, action, number):
             if (action == "delete"):
                 self.canvasRP.delete(self.indexRemainingPieces[number])
@@ -596,6 +599,7 @@ class Gamestate:
             # Players entry field
             InstructionEntry = tk.Entry(root, bd = 5, textvariable=contents, bg="snow", relief=tk.SUNKEN, font=("Helvetica", 14))
             InstructionEntry.place(x=x_start, y=(y_start + 95))
+            InstructionEntry.focus_set()
             self.InstructionEntry = InstructionEntry
 
             # Clear entry
@@ -684,7 +688,7 @@ class Gamestate:
 
         # Icon placement positions (a column)
         x_offset = 80  # x position of images
-        delta_y = 50  # y distance between images (start at 0)
+        delta_y = 55  # y distance between images (start at 0)
 
         # Remaining pieces canvas
         canvasRP = tk.Canvas(root, bg="light grey")
@@ -697,7 +701,7 @@ class Gamestate:
 
         # Set up icon locations in file system
         imagePaths = [
-            tk.PhotoImage(file = path.dirname(__file__) + '/img/p' + str(i) + '.gif')
+            tk.PhotoImage(file = path.abspath(path.dirname(__file__)) + '/imgClr1/p' + str(i) + '.gif')
             for i in range(1, 17)
         ]
 
@@ -706,8 +710,8 @@ class Gamestate:
             {
                 "regular": image,
                 "medium" : image.subsample(2),
-                "small": image.subsample(3),
-                "tiny" : image.subsample(4)
+                "small"  : image.subsample(3),
+                "tiny"   : image.subsample(4)
             }
             for image in imagePaths
         ]
